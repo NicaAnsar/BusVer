@@ -1,11 +1,9 @@
-const fetch = require('node-fetch');
-
 exports.handler = async (event) => {
-    // Netlify automatically handles CORS for functions called from the same site.
+    // This function now uses the native fetch command, no external library needed.
     const { GOOGLE_PLACES_API_KEY } = process.env;
 
     if (!GOOGLE_PLACES_API_KEY) {
-        return { statusCode: 500, body: JSON.stringify({ error: 'API key is not configured.' }) };
+        return { statusCode: 500, body: JSON.stringify({ error: 'API key is not configured on Netlify.' }) };
     }
 
     try {
@@ -23,6 +21,7 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         };
     } catch (error) {
