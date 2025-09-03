@@ -1,5 +1,5 @@
 exports.handler = async (event) => {
-    // This function now uses the native fetch command, no external library needed.
+    // This function uses the native fetch command, no external library is needed.
     const { GOOGLE_PLACES_API_KEY } = process.env;
 
     if (!GOOGLE_PLACES_API_KEY) {
