@@ -24,6 +24,8 @@
             height: auto;
             display: none;
         }
+        .mascot-image { display: none; }
+        .mascot-image.active { display: block; }
         @media (min-width: 1024px) { .mascot-container { display: block; } }
         .speech-bubble {
             position: absolute;
@@ -63,7 +65,8 @@
             <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 min-h-[400px] relative">
                 <!-- Consistent Buttons -->
                 <div id="consistent-buttons" class="absolute top-4 right-4 space-x-2 hidden">
-                    <button id="stop-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors">Stop</button>
+                    <button id="export-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors hidden">Export to Excel</button>
+                    <button id="stop-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors hidden">Stop</button>
                     <button id="restart-button-main" class="bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors">Start Over</button>
                 </div>
 
@@ -85,10 +88,8 @@
                             </div>
                             <div id="upload-error" class="mt-4 text-center lg:text-left text-red-600"></div>
                         </div>
-                        <div class="mascot-container">
+                        <div id="mascot-upload-container" class="mascot-container">
                              <div class="speech-bubble">My investigations work best with clean spreadsheets!</div>
-                             <!-- Replace this with the URL to your hosted PNG mascot image -->
-                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
                         </div>
                     </div>
                 </div>
@@ -116,9 +117,7 @@
                                 <button id="verify-button" class="bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg hover:bg-slate-800 transition-colors w-full sm:w-auto">Start Verification</button>
                             </div>
                         </div>
-                         <div class="mascot-container">
-                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
-                        </div>
+                         <div id="mascot-choice-container" class="mascot-container"></div>
                     </div>
                 </div>
 
@@ -139,9 +138,7 @@
                                 <button id="start-prospecting-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Search for Prospects</button>
                             </div>
                         </div>
-                         <div class="mascot-container">
-                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
-                        </div>
+                         <div id="mascot-prospect-container" class="mascot-container"></div>
                     </div>
                 </div>
 
@@ -158,9 +155,7 @@
                                 <p id="progress-text" class="text-slate-600"></p>
                             </div>
                         </div>
-                         <div class="mascot-container">
-                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
-                        </div>
+                         <div id="mascot-processing-container" class="mascot-container"></div>
                     </div>
                 </div>
 
@@ -174,16 +169,27 @@
                                         <h2 id="results-title" class="text-2xl font-semibold text-slate-800">Results</h2>
                                         <p id="results-subtitle" class="text-slate-500 mt-1">Review the data and make changes as needed.</p>
                                     </div>
-                                     <div class="flex gap-2">
-                                        <!-- Note: Main restart/stop buttons are now at the top right -->
-                                        <button id="export-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Export to Excel</button>
-                                    </div>
                                 </div>
                             </div>
                             <div id="results-table-container" class="mt-6 rounded-lg border"></div>
                         </div>
+                         <div id="mascot-results-container" class="mascot-container"></div>
                     </div>
                 </div>
+
+                <!-- Mascot Images Container -->
+                <div id="mascot-images" class="hidden">
+                    <!-- 
+                        REPLACE these placeholder URLs with links to your own hosted PNG images.
+                        Each image should correspond to the emotion for that step.
+                    -->
+                    <img id="mascot-upload" class="mascot-image" src="https://placehold.co/180x280/e2e8f0/475569?text=Happy Wink" alt="Mascot - Welcome">
+                    <img id="mascot-choice" class="mascot-image" src="https://placehold.co/180x280/e2e8f0/475569?text=Thoughtful" alt="Mascot - Choice">
+                    <img id="mascot-prospect" class="mascot-image" src="https://placehold.co/180x280/e2e8f0/475569?text=Excited" alt="Mascot - Prospect Input">
+                    <img id="mascot-processing" class="mascot-image" src="https://placehold.co/180x280/e2e8f0/475569?text=Focused" alt="Mascot - Processing">
+                    <img id="mascot-results" class="mascot-image" src="https://placehold.co/180x280/e2e8f0/475569?text=Happy Smile" alt="Mascot - Results">
+                </div>
+
             </main>
              <footer class="text-center mt-8">
                 <p class="text-sm text-slate-500">Secure & Reliable Verification Tool</p>
@@ -201,17 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         elements: {},
 
-        init() { this.cacheElements(); this.bindEvents(); },
+        init() { this.cacheElements(); this.setupMascots(); this.bindEvents(); },
 
         cacheElements() {
             const ids = [
-                'consistent-buttons', 'stop-button', 'restart-button-main',
+                'consistent-buttons', 'stop-button', 'restart-button-main', 'export-button',
                 'dropzone', 'file-input', 'upload-error', 
                 'parsing-title', 'parsing-subtitle', 
                 'action-choice-error', 'verify-button', 'prospect-button-init', 
                 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 
                 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 
-                'results-table-container', 'results-title', 'results-subtitle', 'export-button'
+                'results-table-container', 'results-title', 'results-subtitle'
             ];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
@@ -222,12 +228,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 processing: document.getElementById('step-processing'),
                 results: document.getElementById('step-results'),
             };
+            this.elements.mascotImages = document.querySelectorAll('.mascot-image');
+        },
+        
+        setupMascots() {
+            const mascotContainers = {
+                upload: document.getElementById('mascot-upload-container'),
+                choice: document.getElementById('mascot-choice-container'),
+                prospect: document.getElementById('mascot-prospect-container'),
+                processing: document.getElementById('mascot-processing-container'),
+                results: document.getElementById('mascot-results-container'),
+            };
+            for (const key in mascotContainers) {
+                const img = document.getElementById(`mascot-${key}`);
+                if (img && mascotContainers[key]) {
+                    mascotContainers[key].appendChild(img.cloneNode(true));
+                }
+            }
         },
 
         navigateTo(step) {
             Object.values(this.elements.steps).forEach(s => s.classList.remove('active'));
             this.elements.steps[step]?.classList.add('active');
-            this.elements.consistentbuttons.classList.toggle('hidden', step === 'upload');
+            
+            const showConsistentButtons = step !== 'upload' && step !== 'parsing';
+            this.elements.consistentbuttons.classList.toggle('hidden', !showConsistentButtons);
+
+            if (showConsistentButtons) {
+                const isProcessing = step === 'processing';
+                const isResults = step === 'results';
+
+                this.elements.stopbutton.classList.toggle('hidden', !isProcessing);
+                this.elements.restartbuttonmain.classList.toggle('hidden', isProcessing);
+                this.elements.exportbutton.classList.toggle('hidden', !isResults);
+            }
+
+            // Update mascot visibility
+            this.elements.mascotImages.forEach(img => img.classList.remove('active'));
+            let mascotId;
+            switch(step) {
+                case 'upload': mascotId = 'mascot-upload'; break;
+                case 'actionchoice': mascotId = 'mascot-choice'; break;
+                case 'prospectinput': mascotId = 'mascot-prospect'; break;
+                case 'processing': mascotId = 'mascot-processing'; break;
+                case 'results': mascotId = 'mascot-results'; break;
+            }
+            if (mascotId) {
+                const visibleContainer = document.getElementById(`step-${step}`).querySelector('.mascot-image');
+                if(visibleContainer) visibleContainer.classList.add('active');
+            }
         },
 
         bindEvents() {
