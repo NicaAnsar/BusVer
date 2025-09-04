@@ -18,46 +18,36 @@
         [contenteditable]:focus { outline: 2px solid #3b82f6; background-color: #eff6ff; }
         .mascot-container {
             position: absolute;
-            bottom: 0;
-            right: -2.5rem;
-            width: 200px;
-            height: 300px;
+            bottom: -2.5rem;
+            right: -1rem;
+            width: 180px;
+            height: auto;
             display: none;
         }
+        @media (min-width: 1024px) { .mascot-container { display: block; } }
         .speech-bubble {
             position: absolute;
-            background: #e2e8f0;
+            background: #f1f5f9;
             border-radius: .4em;
             padding: 10px;
+            bottom: 16rem;
+            right: 0.5rem;
+            width: 160px;
             font-size: 0.8rem;
-            color: #1e293b;
-            bottom: 260px;
-            right: 160px;
-            width: 150px;
-            opacity: 0;
-            animation: fadeIn 0.5s 0.5s forwards;
+            color: #475569;
         }
         .speech-bubble:after {
             content: '';
             position: absolute;
             bottom: 0;
-            right: 1em;
+            right: 20px;
             width: 0;
             height: 0;
-            border: 1.25em solid transparent;
-            border-top-color: #e2e8f0;
+            border: 10px solid transparent;
+            border-top-color: #f1f5f9;
             border-bottom: 0;
-            border-right: 0;
-            margin-left: -0.625em;
-            margin-bottom: -1.25em;
-        }
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        @media (min-width: 1024px) {
-            .mascot-container {
-                display: block;
-            }
+            margin-left: -10px;
+            margin-bottom: -10px;
         }
     </style>
 </head>
@@ -65,16 +55,16 @@
 
     <div class="flex flex-col items-center justify-center min-h-screen p-4">
         <div class="w-full max-w-5xl mx-auto">
-            <header class="text-center mb-8">
+             <header class="text-center mb-8">
                 <h1 class="text-4xl font-bold tracking-tight text-slate-800">Business Verification & Prospecting</h1>
                 <p class="text-slate-600 mt-2">The secure, reliable tool for verifying and finding new customers.</p>
             </header>
 
             <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 min-h-[400px] relative">
-                
-                <div id="control-buttons" class="absolute top-4 right-4 space-x-2 hidden">
-                    <button id="stop-button" class="bg-red-600 text-white font-semibold py-1 px-3 text-sm rounded-lg hover:bg-red-700 transition-colors">Stop</button>
-                    <button id="restart-button" class="border border-slate-300 text-slate-700 font-semibold py-1 px-3 text-sm rounded-lg hover:bg-slate-100 transition-colors">Start Over</button>
+                <!-- Consistent Buttons -->
+                <div id="consistent-buttons" class="absolute top-4 right-4 space-x-2 hidden">
+                    <button id="stop-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors">Stop</button>
+                    <button id="restart-button-main" class="bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors">Start Over</button>
                 </div>
 
                 <!-- Step 1: File Upload -->
@@ -97,13 +87,13 @@
                         </div>
                         <div class="mascot-container">
                              <div class="speech-bubble">My investigations work best with clean spreadsheets!</div>
-                             <!-- Replace this placeholder URL with a direct link to your PNG mascot image -->
-                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
+                             <!-- Replace this with the URL to your hosted PNG mascot image -->
+                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 1.5: AI Parsing & Mapping -->
+                 <!-- Step 1.5: AI Parsing & Mapping -->
                 <div id="step-parsing" class="step">
                     <div class="text-center flex flex-col items-center justify-center h-full min-h-[300px]">
                         <svg class="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -126,8 +116,8 @@
                                 <button id="verify-button" class="bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg hover:bg-slate-800 transition-colors w-full sm:w-auto">Start Verification</button>
                             </div>
                         </div>
-                        <div class="mascot-container">
-                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
+                         <div class="mascot-container">
+                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
                         </div>
                     </div>
                 </div>
@@ -150,7 +140,7 @@
                             </div>
                         </div>
                          <div class="mascot-container">
-                            <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
+                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
                         </div>
                     </div>
                 </div>
@@ -168,31 +158,29 @@
                                 <p id="progress-text" class="text-slate-600"></p>
                             </div>
                         </div>
-                        <div class="mascot-container">
-                            <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
+                         <div class="mascot-container">
+                             <img src="https://storage.googleapis.com/gemini-prod-us-central1-cbf2/u/0/user/g0yX3Fw0f1c3.png" alt="Detective Mascot">
                         </div>
                     </div>
                 </div>
 
                 <!-- Step 4: Results -->
                 <div id="step-results" class="step">
-                    <div class="grid grid-cols-1 lg:grid-cols-3">
+                    <div class="grid grid-cols-1">
                         <div class="lg:col-span-2">
-                            <div>
+                             <div>
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <h2 id="results-title" class="text-2xl font-semibold text-slate-800">Results</h2>
                                         <p id="results-subtitle" class="text-slate-500 mt-1">Review the data and make changes as needed.</p>
                                     </div>
                                      <div class="flex gap-2">
+                                        <!-- Note: Main restart/stop buttons are now at the top right -->
                                         <button id="export-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Export to Excel</button>
                                     </div>
                                 </div>
                             </div>
                             <div id="results-table-container" class="mt-6 rounded-lg border"></div>
-                        </div>
-                        <div class="mascot-container">
-                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -207,18 +195,24 @@
 document.addEventListener('DOMContentLoaded', () => {
     const App = {
         state: {
-            fileData: [],
-            aiMapping: {},
-            mappedData: [],
-            resultsData: [],
+            fileData: [], aiMapping: {}, mappedData: [], resultsData: [],
             secureProxyUrl: "/.netlify/functions",
+            isProcessing: false,
         },
         elements: {},
 
         init() { this.cacheElements(); this.bindEvents(); },
 
         cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'parsing-title', 'parsing-subtitle', 'control-buttons', 'stop-button', 'restart-button', 'action-choice-error', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button'];
+            const ids = [
+                'consistent-buttons', 'stop-button', 'restart-button-main',
+                'dropzone', 'file-input', 'upload-error', 
+                'parsing-title', 'parsing-subtitle', 
+                'action-choice-error', 'verify-button', 'prospect-button-init', 
+                'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 
+                'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 
+                'results-table-container', 'results-title', 'results-subtitle', 'export-button'
+            ];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
                 upload: document.getElementById('step-upload'),
@@ -233,28 +227,24 @@ document.addEventListener('DOMContentLoaded', () => {
         navigateTo(step) {
             Object.values(this.elements.steps).forEach(s => s.classList.remove('active'));
             this.elements.steps[step]?.classList.add('active');
-            
-            const controlButtonSteps = ['actionchoice', 'prospectinput', 'processing', 'results'];
-            if (controlButtonSteps.includes(step)) {
-                this.elements.controlbuttons.classList.remove('hidden');
-            } else {
-                this.elements.controlbuttons.classList.add('hidden');
-            }
+            this.elements.consistentbuttons.classList.toggle('hidden', step === 'upload');
         },
 
         bindEvents() {
-            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton, stopbutton } = this.elements;
+            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, stopbutton, restartbuttonmain } = this.elements;
             dropzone.addEventListener('click', () => fileinput.click());
             dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-blue-500'); });
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
             dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('border-blue-500'); this.handleFile(e.dataTransfer.files[0]); });
             fileinput.addEventListener('change', e => this.handleFile(e.target.files[0]));
+            
             verifybutton.addEventListener('click', () => this.runVerification());
             prospectbuttoninit.addEventListener('click', () => this.navigateTo('prospectinput'));
             startprospectingbutton.addEventListener('click', () => this.handleProspectSearch());
             exportbutton.addEventListener('click', () => this.exportResults());
-            restartbutton.addEventListener('click', () => this.restart());
-            stopbutton.addEventListener('click', () => this.restart());
+            
+            stopbutton.addEventListener('click', () => this.stop());
+            restartbuttonmain.addEventListener('click', () => this.restart());
         },
 
         handleFile(file) {
@@ -267,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else { this.showError('upload', 'Unsupported file type.'); this.navigateTo('upload'); }
             }, 100);
         },
-        
+
         parseCsv(file) { Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } }); },
         
         parseExcel(file) {
@@ -276,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(e.target.result);
                     const worksheet = workbook.worksheets[0]; let headerRowNumber = -1, headers = [];
-                    worksheet.eachRow((row, rowNum) => { if (row.values.filter(Boolean).length > 0 && headerRowNumber < 0) { headers = row.values.filter(Boolean).map(h => h.toString().trim()); headerRowNumber = rowNum; } });
+                    worksheet.eachRow((row, rowNum) => { if (row.values.filter(Boolean).length > 1 && headerRowNumber < 0) { headers = row.values.filter(Boolean).map(h => h.toString().trim()); headerRowNumber = rowNum; } });
                     if (headers.length === 0) throw new Error("Could not find a valid header row.");
                     const data = [];
                     worksheet.eachRow((row, rowNumber) => {
@@ -295,17 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
         async onFileParsed(headers, data) {
             this.state.fileData = data;
             const sampleData = data.slice(0, 5);
-            this.elements.parsingtitle.textContent = "AI Analyzing Columns...";
-            this.elements.parsingsubtitle.textContent = "Our detective is figuring out your spreadsheet structure.";
+            this.elements.parsingtitle.textContent = "AI Analyzing Columns..."; this.elements.parsingsubtitle.textContent = "Our detective is figuring out your spreadsheet structure.";
             try {
                 const { mapping } = await this.callSecureFunction('intelligent-mapper', { headers, sampleData });
-                this.state.aiMapping = mapping;
-                this.mapDataWithAI();
-                this.navigateTo('actionchoice');
-            } catch (error) {
-                this.showError('upload', `AI Mapping Failed: ${error.message}. Please check file format.`);
-                this.navigateTo('upload');
-            }
+                this.state.aiMapping = mapping; this.mapDataWithAI(); this.navigateTo('actionchoice');
+            } catch (error) { this.showError('upload', `AI Mapping Failed: ${error.message}. Please check file format.`); this.navigateTo('upload'); }
         },
 
         mapDataWithAI() {
@@ -314,10 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(mappedFields.length === 0){ this.showError('actionchoice', 'The AI could not identify standard business fields. Please check your spreadsheet.'); return; }
             this.state.mappedData = fileData.map(row => {
                 const newRow = {};
-                for(const field of ['Business Name', 'Address', 'Phone', 'Email']){
-                     const header = Object.keys(aiMapping).find(h => aiMapping[h] === field);
-                     newRow[field] = header ? (row[header] || '') : '';
-                }
+                for(const field of ['Business Name', 'Address', 'Phone', 'Email']){ const header = Object.keys(aiMapping).find(h => aiMapping[h] === field); newRow[field] = header ? (row[header] || '') : ''; }
                 return newRow;
             });
         },
@@ -338,27 +319,31 @@ document.addEventListener('DOMContentLoaded', () => {
         async runVerification() {
             if (this.state.mappedData.length === 0) this.mapDataWithAI();
             if(this.state.mappedData.length === 0) return;
+            this.state.isProcessing = true;
             this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
             this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
             for (let i = 0; i < total; i++) {
+                if (!this.state.isProcessing) break;
                 const item = this.state.mappedData[i];
                 try { const result = await this.callSecureFunction('verify-place', { business: item }); this.state.resultsData.push(result); } catch (error) { this.state.resultsData.push({ ...item, Status: 'API Error', 'Current Occupant': error.message, 'Verification Link': '#' }); }
                 const progress = ((i + 1) / total) * 100; this.elements.progressbar.style.width = `${progress}%`; this.elements.progresstext.textContent = `Verifying: ${item['Business Name']} (${i + 1} of ${total})`;
             }
-            this.renderVerificationResults(); this.navigateTo('results');
+            if (this.state.isProcessing) { this.renderVerificationResults(); this.navigateTo('results'); }
+            this.state.isProcessing = false;
         },
 
         async runProspecting(keyword) {
              if (this.state.mappedData.length === 0) this.mapDataWithAI();
              if(this.state.mappedData.length === 0) return;
+            this.state.isProcessing = true;
             this.elements.processingtitle.textContent = "Finding New Friends..."; this.elements.processingsubtitle.textContent = `Searching for '${keyword}' in your provided zip codes.`;
             this.elements.progresstext.textContent = "Sending request to our secure prospecting service...";
             this.navigateTo('processing');
             try {
                 const result = await this.callSecureFunction('find-prospects', { businesses: this.state.mappedData, keyword: keyword });
-                this.state.resultsData = result.prospects;
-                this.renderProspectingResults(); this.navigateTo('results');
+                if (this.state.isProcessing) { this.state.resultsData = result.prospects; this.renderProspectingResults(); this.navigateTo('results'); }
             } catch (error) { this.showError('prospectinput', `Prospecting failed: ${error.message}`); this.navigateTo('prospectinput'); }
+            this.state.isProcessing = false;
         },
         
         renderVerificationResults() {
@@ -395,8 +380,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), 'verification_results.xlsx');
         },
 
+        stop() {
+            this.state.isProcessing = false;
+            this.navigateTo('actionchoice'); 
+        },
+
         restart() {
-            this.state = { fileData: [], aiMapping: {}, mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions" };
+            this.state = { fileData: [], aiMapping: {}, mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions", isProcessing: false };
             this.elements.fileinput.value = ''; this.navigateTo('upload');
         },
         
