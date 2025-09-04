@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Verification & Prospecting Tool - v19.0</title>
+    <title>Business Verification Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -24,7 +24,7 @@
         <div class="w-full max-w-5xl mx-auto">
             <header class="text-center mb-8">
                 <h1 class="text-4xl font-bold tracking-tight text-slate-800">Business Verification & Prospecting</h1>
-                <p class="text-slate-600 mt-2">Verify your list or find new leads in the same area.</p>
+                <p class="text-slate-600 mt-2">The secure, reliable tool for verifying and finding new customers.</p>
             </header>
 
             <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 min-h-[400px]">
@@ -32,7 +32,7 @@
                 <div id="step-upload" class="step active">
                     <div class="text-center">
                         <h2 class="text-2xl font-semibold text-slate-800">Step 1: Upload File</h2>
-                        <p class="text-slate-500 mt-1">Upload your current customer or lead list to get started.</p>
+                        <p class="text-slate-500 mt-1">Select or drag a CSV or Excel file to get started.</p>
                     </div>
                     <div id="dropzone" class="mt-8 p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors border-slate-300 bg-slate-50 hover:border-blue-500">
                         <input type="file" id="file-input" class="hidden" accept=".csv, .xlsx, .xls">
@@ -45,21 +45,33 @@
                     <div id="upload-error" class="mt-4 text-center text-red-600"></div>
                 </div>
 
+                <!-- Step 1.5: Parsing File -->
+                <div id="step-parsing" class="step">
+                    <div class="text-center flex flex-col items-center justify-center h-full min-h-[300px]">
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <h2 class="text-2xl font-semibold text-slate-800">Reading Your Spreadsheet...</h2>
+                        <p class="text-slate-500 mt-1">Please wait, this may take a moment for large files.</p>
+                    </div>
+                </div>
+
                 <!-- Step 2: Column Mapping -->
                 <div id="step-mapping" class="step">
                      <div>
-                        <h2 class="text-2xl font-semibold text-slate-800">Step 2: Map Columns & Choose Action</h2>
-                        <p class="text-slate-500 mt-1">Map your columns, then choose to verify your list or find new prospects.</p>
+                        <h2 class="text-2xl font-semibold text-slate-800">Step 2: Map Columns</h2>
+                        <p class="text-slate-500 mt-1">Match your spreadsheet columns to the required data fields.</p>
                     </div>
                     <div id="mapping-error" class="my-4 p-3 text-red-700 bg-red-100 rounded-lg hidden"></div>
                     <div id="mapping-table-container" class="mt-6 rounded-lg border"></div>
                     <div class="flex justify-end mt-6 space-x-4">
                         <button id="prospect-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Find Me More Friends</button>
-                        <button id="map-button" class="bg-blue-800 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-900 transition-colors">Start Verification</button>
+                        <button id="verify-button" class="bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-800 transition-colors">Start Verification</button>
                     </div>
                 </div>
-                
-                <!-- Step 3: Processing -->
+
+                <!-- Step 3: Processing (Verification or Prospecting) -->
                 <div id="step-processing" class="step">
                     <div class="text-center">
                         <h2 id="processing-title" class="text-2xl font-semibold text-slate-800">Processing...</h2>
@@ -79,7 +91,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h2 id="results-title" class="text-2xl font-semibold text-slate-800">Results</h2>
-                                <p id="results-subtitle" class="text-slate-500 mt-1">Review your results below.</p>
+                                <p id="results-subtitle" class="text-slate-500 mt-1">Review the data and make changes as needed.</p>
                             </div>
                              <div class="flex gap-2">
                                 <button id="restart-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors">Start Over</button>
@@ -91,7 +103,7 @@
                 </div>
             </main>
              <footer class="text-center mt-8">
-                <p class="text-sm text-slate-500">v19.0 - Verification & Prospecting</p>
+                <p class="text-sm text-slate-500">Secure & Reliable Verification Tool</p>
             </footer>
         </div>
     </div>
@@ -99,19 +111,25 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const App = {
-        state: { fileHeaders: [], fileData: [], resultsData: [], currentAction: 'verify' },
+        state: {
+            fileHeaders: [],
+            fileData: [],
+            resultsData: [],
+            secureProxyUrl: "/.netlify/functions",
+        },
         elements: {},
-        
+
         init() {
             this.cacheElements();
             this.bindEvents();
         },
 
         cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'map-button', 'prospect-button', 'progress-bar', 'progress-text', 'results-table-container', 'export-button', 'restart-button', 'processing-title', 'processing-subtitle', 'results-title', 'results-subtitle'];
+            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'verify-button', 'prospect-button', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
                 upload: document.getElementById('step-upload'),
+                parsing: document.getElementById('step-parsing'),
                 mapping: document.getElementById('step-mapping'),
                 processing: document.getElementById('step-processing'),
                 results: document.getElementById('step-results'),
@@ -124,150 +142,242 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         bindEvents() {
-            const { dropzone, fileinput, mapbutton, prospectbutton, exportbutton, restartbutton } = this.elements;
+            const { dropzone, fileinput, verifybutton, prospectbutton, exportbutton, restartbutton } = this.elements;
             dropzone.addEventListener('click', () => fileinput.click());
             dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-blue-500'); });
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
             dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('border-blue-500'); this.handleFile(e.dataTransfer.files[0]); });
             fileinput.addEventListener('change', e => this.handleFile(e.target.files[0]));
-            mapbutton.addEventListener('click', () => this.processMapping('verify'));
-            prospectbutton.addEventListener('click', () => this.processMapping('prospect'));
+            verifybutton.addEventListener('click', () => this.processData('verify'));
+            prospectbutton.addEventListener('click', () => this.processData('prospect'));
             exportbutton.addEventListener('click', () => this.exportResults());
             restartbutton.addEventListener('click', () => this.restart());
         },
 
-        handleFile(file) { if (!file) return; this.showError('upload', ''); const ext = file.name.split('.').pop().toLowerCase(); if (ext === 'csv') this.parseCsv(file); else if (['xlsx', 'xls'].includes(ext)) this.parseExcel(file); else this.showError('upload', 'Unsupported file type.'); },
-        parseCsv(file) { Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => this.showError('upload', `CSV Error: ${err.message}`) }); },
-        parseExcel(file) { const reader = new FileReader(); reader.onload = async e => { try { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(e.target.result); const ws = wb.worksheets[0]; const h = (ws.getRow(1).values || []).filter(Boolean).map(x=>x.toString()); const d = []; ws.eachRow((r, n) => { if (n > 1) { const rd = {}; r.eachCell({ includeEmpty: true }, (c, i) => { if (h[i - 1]) rd[h[i - 1]] = c.value?.toString() || ''; }); d.push(rd); } }); this.onFileParsed(h, d); } catch (err) { this.showError('upload', `Excel Error: ${err.message}`); } }; reader.readAsArrayBuffer(file); },
-
-        onFileParsed(headers, data) { this.state.fileHeaders = headers; this.state.fileData = data; this.renderMappingTable(); this.navigateTo('mapping'); },
-
-        renderMappingTable() { const TARGET_FIELDS = ['Business Name', 'Address', 'Phone', 'Email']; const autoDetect = h => { const l = (h || '').toLowerCase(); if (l.includes('name')) return 'Business Name'; if (l.includes('address')) return 'Address'; return ''; }; let t = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-3 text-left font-semibold">Your Column</th><th class="p-3 text-left font-semibold">Map to Field</th></tr></thead><tbody>`; const d = {}; this.state.fileHeaders.forEach(h => { const a = autoDetect(h); if (a && !Object.values(d).includes(a)) d[h] = a; }); this.state.fileHeaders.forEach(h => { const s = d[h] || ''; let o = '<option value="ignore">Ignore</option>'; TARGET_FIELDS.forEach(f => o += `<option value="${f}" ${s === f ? 'selected' : ''}>${f}</option>`); t += `<tr class="border-t"><td class="p-3 font-medium">${h}</td><td class="p-3"><select data-header="${h}" class="mapping-select w-full p-2 border rounded-md bg-white">${o}</select></td></tr>`; }); this.elements.mappingtablecontainer.innerHTML = t + '</tbody></table>'; },
-
-        processMapping(action) {
-            this.state.currentAction = action;
-            this.showError('mapping', '');
-            const mappings = {}; const fields = new Set();
-            document.querySelectorAll('.mapping-select').forEach(s => { if (s.value !== 'ignore') { if (fields.has(s.value)) return this.showError('mapping', `Field '${s.value}' mapped multiple times.`); mappings[s.dataset.header] = s.value; fields.add(s.value); } });
-            if (this.elements.mappingerror.textContent) return;
-
-            const mappedData = this.state.fileData.map(row => { const newRow = {}; fields.forEach(field => { const header = Object.keys(mappings).find(h => mappings[h] === field); newRow[field] = row[header] || ''; }); return newRow; });
+        handleFile(file) {
+            if (!file) return;
+            this.showError('upload', '');
+            this.navigateTo('parsing'); // Show loading bar
             
-            if (action === 'verify') this.runAutomatedVerification(mappedData);
-            if (action === 'prospect') this.runProspecting(mappedData);
+            // Use a short timeout to allow the UI to update before parsing begins
+            setTimeout(() => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'csv') this.parseCsv(file);
+                else if (['xlsx', 'xls'].includes(ext)) this.parseExcel(file);
+                else {
+                    this.showError('upload', 'Unsupported file type.');
+                    this.navigateTo('upload');
+                }
+            }, 100);
         },
 
-        async runAutomatedVerification(data) {
-            this.elements.processingtitle.textContent = 'Verifying Businesses...';
-            this.elements.processingsubtitle.textContent = 'Please wait while we securely verify your records.';
+        parseCsv(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: res => this.onFileParsed(res.meta.fields, res.data),
+                error: err => {
+                    this.showError('upload', `CSV Error: ${err.message}`);
+                    this.navigateTo('upload');
+                }
+            });
+        },
+        
+        parseExcel(file) {
+            const reader = new FileReader();
+            reader.onload = async e => {
+                try {
+                    const workbook = new ExcelJS.Workbook();
+                    await workbook.xlsx.load(e.target.result);
+                    const worksheet = workbook.worksheets[0];
+                    const headers = (worksheet.getRow(1).values || []).filter(Boolean).map(h => h.toString());
+                    const data = [];
+                    worksheet.eachRow((row, rowNumber) => {
+                        if (rowNumber > 1) {
+                            const rowData = {};
+                            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                                if (headers[colNumber - 1]) {
+                                    rowData[headers[colNumber - 1]] = cell.value?.toString() || '';
+                                }
+                            });
+                            data.push(rowData);
+                        }
+                    });
+                    this.onFileParsed(headers, data);
+                } catch (err) {
+                    this.showError('upload', `Excel Error: ${err.message}`);
+                    this.navigateTo('upload');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        },
+
+        onFileParsed(headers, data) {
+            this.state.fileHeaders = headers;
+            this.state.fileData = data;
+            this.renderMappingTable();
+            this.navigateTo('mapping');
+        },
+
+        renderMappingTable() {
+            const TARGET_FIELDS = ['Business Name', 'Address', 'Phone', 'Email'];
+            const autoDetect = h => { const l = (h || '').toLowerCase(); if (l.includes('name')) return 'Business Name'; if (l.includes('address')) return 'Address'; return ''; };
+            let tableHtml = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-3 text-left font-semibold">Your Column</th><th class="p-3 text-left font-semibold">Map to Field</th></tr></thead><tbody>`;
+            const detected = {};
+            this.state.fileHeaders.forEach(h => { const d = autoDetect(h); if (d && !Object.values(detected).includes(d)) detected[h] = d; });
+            this.state.fileHeaders.forEach(h => {
+                const sel = detected[h] || '';
+                let opts = '<option value="ignore">Ignore</option>';
+                TARGET_FIELDS.forEach(f => opts += `<option value="${f}" ${sel === f ? 'selected' : ''}>${f}</option>`);
+                tableHtml += `<tr class="border-t"><td class="p-3 font-medium">${h}</td><td class="p-3"><select data-header="${h}" class="mapping-select w-full p-2 border rounded-md bg-white">${opts}</select></td></tr>`;
+            });
+            this.elements.mappingtablecontainer.innerHTML = tableHtml + '</tbody></table>';
+        },
+
+        processData(type) {
+            this.showError('mapping', '');
+            const mappings = {};
+            const fields = new Set();
+            document.querySelectorAll('.mapping-select').forEach(s => {
+                if (s.value !== 'ignore') {
+                    if (fields.has(s.value)) return this.showError('mapping', `Field '${s.value}' mapped multiple times.`);
+                    mappings[s.dataset.header] = s.value;
+                    fields.add(s.value);
+                }
+            });
+            if (this.elements.mappingerror.textContent) return;
+
+            const mappedData = this.state.fileData.map(row => {
+                const newRow = {};
+                fields.forEach(field => { const header = Object.keys(mappings).find(h => mappings[h] === field); newRow[field] = row[header] || ''; });
+                return newRow;
+            });
+            
+            if (type === 'verify') this.runVerification(mappedData);
+            else if (type === 'prospect') this.runProspecting(mappedData);
+        },
+
+        async callSecureFunction(endpoint, payload) {
+            const response = await fetch(`${this.state.secureProxyUrl}/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'A server error occurred.');
+            }
+            return response.json();
+        },
+
+        async runVerification(data) {
+            this.elements.processingtitle.textContent = "Verifying Businesses...";
+            this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
             this.navigateTo('processing');
             this.state.resultsData = [];
-            for (let i = 0; i < data.length; i++) {
-                if (this.elements.mappingerror.textContent) break;
+            const total = data.length;
+
+            for (let i = 0; i < total; i++) {
                 const item = data[i];
-                const result = await this.callSecureFunction('/.netlify/functions/verify-place', { name: item['Business Name'], address: item['Address'] });
-                const { status = 'API Error', foundName = '' } = result || {};
-                const searchQuery = `${item['Business Name'] || ''} ${item['Address'] || ''}`;
-                this.state.resultsData.push({ ...item, 'Status': status, 'Current Occupant': foundName, 'Verification Link': `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}` });
-                this.updateProgress(i + 1, data.length, `Verifying: ${item['Business Name']}`);
+                try {
+                    const result = await this.callSecureFunction('verify-place', { business: item });
+                    this.state.resultsData.push(result);
+                } catch (error) {
+                    this.state.resultsData.push({ ...item, Status: 'API Error', 'Current Occupant': error.message, 'Verification Link': '#' });
+                }
+                const progress = ((i + 1) / total) * 100;
+                this.elements.progressbar.style.width = `${progress}%`;
+                this.elements.progresstext.textContent = `Verifying: ${item['Business Name']} (${i + 1} of ${total})`;
             }
-            if (!this.elements.mappingerror.textContent) {
-                this.elements.resultstitle.textContent = 'Verification Results';
-                this.elements.resultssubtitle.textContent = 'Review the automated results and make manual corrections as needed.';
-                this.renderResultsTable();
+            this.renderVerificationResults();
+            this.navigateTo('results');
+        },
+
+        async runProspecting(data) {
+            this.elements.processingtitle.textContent = "Finding New Friends...";
+            this.elements.processingsubtitle.textContent = "Analyzing your list and searching for new prospects. This may take a few moments.";
+            this.elements.progresstext.textContent = "Analyzing business types with Gemini API...";
+            this.navigateTo('processing');
+            try {
+                const result = await this.callSecureFunction('find-prospects', { businesses: data });
+                this.state.resultsData = result.prospects;
+                this.renderProspectingResults();
                 this.navigateTo('results');
+            } catch (error) {
+                this.showError('mapping', `Prospecting failed: ${error.message}`);
+                this.navigateTo('mapping');
             }
         },
         
-        async runProspecting(data) {
-            if (!data.some(row => row['Address'])) return this.showError('mapping', 'Address column must be mapped to find prospects.');
-            this.elements.processingtitle.textContent = 'Finding New Friends...';
-            this.elements.processingsubtitle.textContent = 'Analyzing your list and searching for new prospects.';
-            this.navigateTo('processing');
-            const result = await this.callSecureFunction('/.netlify/functions/find-prospects', { businesses: data });
-            this.state.resultsData = result?.prospects || [];
-            if (!this.elements.mappingerror.textContent) {
-                this.elements.resultstitle.textContent = 'New Prospects Found';
-                this.elements.resultssubtitle.textContent = `We found ${this.state.resultsData.length} new businesses similar to the ones on your list.`;
-                this.renderResultsTable();
-                this.navigateTo('results');
-            }
-        },
-
-        async callSecureFunction(endpoint, body) {
-            try {
-                const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    this.showError('mapping', `Service error: ${errorData.error || response.statusText}`);
-                    return null;
-                }
-                return await response.json();
-            } catch (error) {
-                this.showError('mapping', 'Could not connect to the processing service. Please check the function logs on Netlify.');
-                return null;
-            }
-        },
-
-        updateProgress(current, total, text) {
-            const progress = (current / total) * 100;
-            this.elements.progressbar.style.width = `${progress}%`;
-            this.elements.progresstext.textContent = `${text} (${current} of ${total})`;
-        },
-
-        renderResultsTable() {
-            const results = this.state.resultsData;
-            if (!results.length) { this.elements.resultstablecontainer.innerHTML = `<p class="p-4 text-center text-slate-500">No results to display.</p>`; return; }
-            
-            if (this.state.currentAction === 'prospect') {
-                results.forEach(res => {
-                    const searchQuery = `${res['Business Name'] || ''} ${res['Address'] || ''}`;
-                    res['Search Link'] = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-                });
-            }
-
-            const availableHeaders = Object.keys(results[0]);
-            const desiredOrder = this.state.currentAction === 'verify'
-                ? ['Business Name', 'Address', 'Phone', 'Email', 'Status', 'Current Occupant', 'Verification Link']
-                : ['Business Name', 'Address', 'Phone Number', 'Search Link'];
-            const headers = desiredOrder.filter(h => availableHeaders.includes(h));
-            
+        renderVerificationResults() {
+            this.elements.resultstitle.textContent = "Verification Results";
+            this.elements.resultssubtitle.textContent = "The 'Status' column is editable. Click to make changes.";
+            const headers = ['Business Name', 'Address', 'Status', 'Current Occupant', 'Verification Link'];
             const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
-            
-            const rowsHtml = results.map((res, index) => {
-                const cells = headers.map(h => {
-                    const val = res[h] || '';
-                    if (h === 'Verification Link' || h === 'Search Link') return `<td class="p-3"><a href="${val}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
-                    if (h === 'Status') {
-                        const colors = { 'Verified': 'bg-green-100 text-green-800', 'Not Found': 'bg-red-100 text-red-800', 'Uncertain': 'bg-yellow-100 text-yellow-800', 'API Error': 'bg-orange-100 text-orange-800' };
-                        const statusHtml = `<span class="px-2 py-1 rounded-full text-xs font-medium ${colors[val] || 'bg-slate-100'}">${val}</span>`;
-                        return `<td class="p-3 status-cell" contenteditable="true" data-row-index="${index}">${statusHtml}</td>`;
-                    }
-                    return `<td class="p-3 font-medium">${val}</td>`;
-                }).join('');
+            const rowsHtml = this.state.resultsData.map((res, index) => {
+                const status = res['Status'] || 'Not Found';
+                const colors = { 'Verified': 'bg-green-100 text-green-800', 'Not Found': 'bg-red-100 text-red-800', 'API Error': 'bg-yellow-100 text-yellow-800' };
+                const cells = `
+                    <td class="p-3 font-medium">${res['Business Name'] || ''}</td>
+                    <td class="p-3">${res['Address'] || ''}</td>
+                    <td class="p-3 status-cell" contenteditable="true" data-row-index="${index}"><span class="px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-slate-100'}">${status}</span></td>
+                    <td class="p-3">${res['Current Occupant'] || 'N/A'}</td>
+                    <td class="p-3"><a href="${res['Verification Link']}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
                 return `<tr class="border-t">${cells}</tr>`;
             }).join('');
             this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
         },
 
+        renderProspectingResults() {
+            this.elements.resultstitle.textContent = "New Prospects Found";
+            this.elements.resultssubtitle.textContent = "Here are new businesses we found based on your list.";
+            const headers = ['Business Name', 'Address', 'Phone Number', 'Quick Search'];
+            const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
+            const rowsHtml = this.state.resultsData.map(res => {
+                const searchQuery = `https://www.google.com/search?q=${encodeURIComponent(res['Business Name'] + ' ' + res['Address'])}`;
+                const cells = `
+                    <td class="p-3 font-medium">${res['Business Name'] || ''}</td>
+                    <td class="p-3">${res['Address'] || ''}</td>
+                    <td class="p-3">${res['Phone Number'] || 'N/A'}</td>
+                    <td class="p-3"><a href="${searchQuery}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
+                return `<tr class="border-t">${cells}</tr>`;
+            }).join('');
+            this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
+        },
+        
         async exportResults() {
-            if (this.state.currentAction === 'verify') {
-                document.querySelectorAll('.status-cell').forEach(cell => { const index = parseInt(cell.dataset.rowIndex, 10); if (this.state.resultsData[index]) this.state.resultsData[index]['Status'] = cell.textContent.trim(); });
+            // Update status from editable cells before exporting verification results
+            if (document.querySelector('.status-cell')) {
+                 document.querySelectorAll('.status-cell').forEach(cell => {
+                    const index = parseInt(cell.dataset.rowIndex, 10);
+                    if (this.state.resultsData[index]) this.state.resultsData[index]['Status'] = cell.textContent;
+                });
             }
+
             if (!this.state.resultsData.length) return;
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Results');
             worksheet.columns = Object.keys(this.state.resultsData[0]).map(h => ({ header: h, key: h, width: h.toLowerCase().includes('address') ? 40 : 25 }));
             this.state.resultsData.forEach(row => worksheet.addRow(row));
             const buffer = await workbook.xlsx.writeBuffer();
-            const filename = this.state.currentAction === 'verify' ? 'verification_results.xlsx' : 'prospect_list.xlsx';
-            saveAs(new Blob([buffer]), filename);
+            saveAs(new Blob([buffer]), 'verification_results.xlsx');
         },
 
-        restart() { this.state = { fileHeaders: [], fileData: [], resultsData: [], currentAction: 'verify' }; this.elements.fileinput.value = ''; this.navigateTo('upload'); },
-        showError(step, message) { const el = this.elements[`${step}Error`]; if (el) { el.textContent = message; el.classList.toggle('hidden', !message); } }
+        restart() {
+            this.state.fileHeaders = [];
+            this.state.fileData = [];
+            this.state.resultsData = [];
+            this.elements.fileinput.value = '';
+            this.navigateTo('upload');
+        },
+        
+        showError(step, message) {
+            const el = this.elements[`${step}Error`];
+            if (el) { el.textContent = message; el.classList.toggle('hidden', !message); }
+        }
     };
-    App.init(); 
+
+    App.init();
 });
 </script>
 </body>
