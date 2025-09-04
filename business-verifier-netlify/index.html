@@ -66,8 +66,24 @@
                     <div id="mapping-error" class="my-4 p-3 text-red-700 bg-red-100 rounded-lg hidden"></div>
                     <div id="mapping-table-container" class="mt-6 rounded-lg border"></div>
                     <div class="flex justify-end mt-6 space-x-4">
-                        <button id="prospect-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Find Me More Friends</button>
+                        <button id="prospect-button-init" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Find Me More Friends</button>
                         <button id="verify-button" class="bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-800 transition-colors">Start Verification</button>
+                    </div>
+                </div>
+
+                <!-- Step 2.5: Prospecting Input -->
+                <div id="step-prospect-input" class="step">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-slate-800">Find New Prospects</h2>
+                        <p class="text-slate-500 mt-1">What type of businesses are you looking for?</p>
+                    </div>
+                    <div class="mt-6">
+                        <label for="prospect-keyword" class="block text-sm font-medium text-slate-700">Business Type (e.g., "plumbers", "dentists")</label>
+                        <input type="text" id="prospect-keyword" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter a business type or keyword">
+                    </div>
+                    <div id="prospect-input-error" class="mt-2 text-sm text-red-600"></div>
+                    <div class="flex justify-end mt-6">
+                        <button id="start-prospecting-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Search for Prospects</button>
                     </div>
                 </div>
 
@@ -114,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state: {
             fileHeaders: [],
             fileData: [],
+            mappedData: [],
             resultsData: [],
             secureProxyUrl: "/.netlify/functions",
         },
@@ -125,12 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'verify-button', 'prospect-button', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
+            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
                 upload: document.getElementById('step-upload'),
                 parsing: document.getElementById('step-parsing'),
                 mapping: document.getElementById('step-mapping'),
+                prospectinput: document.getElementById('step-prospect-input'),
                 processing: document.getElementById('step-processing'),
                 results: document.getElementById('step-results'),
             };
@@ -142,14 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         bindEvents() {
-            const { dropzone, fileinput, verifybutton, prospectbutton, exportbutton, restartbutton } = this.elements;
+            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton } = this.elements;
             dropzone.addEventListener('click', () => fileinput.click());
             dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-blue-500'); });
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
             dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('border-blue-500'); this.handleFile(e.dataTransfer.files[0]); });
             fileinput.addEventListener('change', e => this.handleFile(e.target.files[0]));
-            verifybutton.addEventListener('click', () => this.processData('verify'));
-            prospectbutton.addEventListener('click', () => this.processData('prospect'));
+            verifybutton.addEventListener('click', () => this.handleProcessClick('verify'));
+            prospectbuttoninit.addEventListener('click', () => this.handleProcessClick('prospect-init'));
+            startprospectingbutton.addEventListener('click', () => this.handleProspectSearch());
             exportbutton.addEventListener('click', () => this.exportResults());
             restartbutton.addEventListener('click', () => this.restart());
         },
@@ -158,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!file) return;
             this.showError('upload', '');
             this.navigateTo('parsing'); 
-            
             setTimeout(() => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (ext === 'csv') this.parseCsv(file);
@@ -171,15 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         parseCsv(file) {
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: res => this.onFileParsed(res.meta.fields, res.data),
-                error: err => {
-                    this.showError('upload', `CSV Error: ${err.message}`);
-                    this.navigateTo('upload');
-                }
-            });
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } });
         },
         
         parseExcel(file) {
@@ -189,62 +199,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     const workbook = new ExcelJS.Workbook();
                     await workbook.xlsx.load(e.target.result);
                     const worksheet = workbook.worksheets[0];
-                    
-                    let headerRowNumber = -1;
-                    let headers = [];
-                    worksheet.eachRow((row, rowNum) => {
-                        const nonEmptyCells = row.values.filter(Boolean);
-                        if (nonEmptyCells.length > 0 && headerRowNumber < 0) {
-                            headers = nonEmptyCells.map(h => h.toString().trim());
-                            headerRowNumber = rowNum;
-                        }
-                    });
-
-                    if (headers.length === 0) {
-                        throw new Error("Could not find a valid header row in the spreadsheet.");
-                    }
-
+                    let headerRowNumber = -1, headers = [];
+                    worksheet.eachRow((row, rowNum) => { if (row.values.filter(Boolean).length > 0 && headerRowNumber < 0) { headers = row.values.filter(Boolean).map(h => h.toString().trim()); headerRowNumber = rowNum; } });
+                    if (headers.length === 0) throw new Error("Could not find a valid header row.");
                     const data = [];
                     worksheet.eachRow((row, rowNumber) => {
                         if (rowNumber > headerRowNumber) {
-                            const rowData = {};
-                            let hasData = false;
+                            const rowData = {}; let hasData = false;
                             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                                 const header = headers[colNumber - 1];
-                                if (header) {
-                                    let cellValue = '';
-                                    if (cell.value) {
-                                        if (typeof cell.value === 'object' && cell.value.richText) {
-                                            cellValue = cell.value.richText.map(rt => rt.text).join('');
-                                        } else if (typeof cell.value === 'object' && cell.value.result) {
-                                            cellValue = cell.value.result.toString();
-                                        } else {
-                                            cellValue = cell.value.toString();
-                                        }
-                                    }
-                                    rowData[header] = cellValue;
-                                    if (cellValue) hasData = true;
-                                }
+                                if (header) { let val = cell.value?.toString() || ''; rowData[header] = val; if(val) hasData = true; }
                             });
-                            if (hasData) {
-                               data.push(rowData);
-                            }
+                            if (hasData) data.push(rowData);
                         }
                     });
                     this.onFileParsed(headers, data);
-                } catch (err) {
-                    this.showError('upload', `Excel Error: ${err.message}`);
-                    this.navigateTo('upload');
-                }
+                } catch (err) { this.showError('upload', `Excel Error: ${err.message}`); this.navigateTo('upload'); }
             };
             reader.readAsArrayBuffer(file);
         },
 
         onFileParsed(headers, data) {
-            this.state.fileHeaders = headers;
-            this.state.fileData = data;
-            this.renderMappingTable();
-            this.navigateTo('mapping');
+            this.state.fileHeaders = headers; this.state.fileData = data; this.renderMappingTable(); this.navigateTo('mapping');
         },
 
         renderMappingTable() {
@@ -254,154 +230,106 @@ document.addEventListener('DOMContentLoaded', () => {
             const detected = {};
             this.state.fileHeaders.forEach(h => { const d = autoDetect(h); if (d && !Object.values(detected).includes(d)) detected[h] = d; });
             this.state.fileHeaders.forEach(h => {
-                const sel = detected[h] || '';
-                let opts = '<option value="ignore">Ignore</option>';
+                const sel = detected[h] || ''; let opts = '<option value="ignore">Ignore</option>';
                 TARGET_FIELDS.forEach(f => opts += `<option value="${f}" ${sel === f ? 'selected' : ''}>${f}</option>`);
                 tableHtml += `<tr class="border-t"><td class="p-3 font-medium">${h}</td><td class="p-3"><select data-header="${h}" class="mapping-select w-full p-2 border rounded-md bg-white">${opts}</select></td></tr>`;
             });
             this.elements.mappingtablecontainer.innerHTML = tableHtml + '</tbody></table>';
         },
 
-        processData(type) {
-            this.showError('mapping', '');
-            const mappings = {};
-            const fields = new Set();
+        handleProcessClick(type) {
+            this.showError('mapping', ''); const mappings = {}; const fields = new Set();
             document.querySelectorAll('.mapping-select').forEach(s => {
                 if (s.value !== 'ignore') {
                     if (fields.has(s.value)) return this.showError('mapping', `Field '${s.value}' mapped multiple times.`);
-                    mappings[s.dataset.header] = s.value;
-                    fields.add(s.value);
+                    mappings[s.dataset.header] = s.value; fields.add(s.value);
                 }
             });
             if (this.elements.mappingerror.textContent) return;
-
-            const mappedData = this.state.fileData.map(row => {
+            this.state.mappedData = this.state.fileData.map(row => {
                 const newRow = {};
                 fields.forEach(field => { const header = Object.keys(mappings).find(h => mappings[h] === field); newRow[field] = row[header] || ''; });
                 return newRow;
             });
-            
-            if (type === 'verify') this.runVerification(mappedData);
-            else if (type === 'prospect') this.runProspecting(mappedData);
+            if (type === 'verify') this.runVerification();
+            else if (type === 'prospect-init') this.navigateTo('prospectinput');
+        },
+
+        handleProspectSearch() {
+            const keyword = this.elements.prospectkeyword.value.trim();
+            this.elements.prospectinputerror.textContent = '';
+            if (!keyword) { this.elements.prospectinputerror.textContent = 'Please enter a business type to search for.'; return; }
+            this.runProspecting(keyword);
         },
 
         async callSecureFunction(endpoint, payload) {
-            const response = await fetch(`${this.state.secureProxyUrl}/${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'A server error occurred.');
-            }
+            const response = await fetch(`${this.state.secureProxyUrl}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'A server error occurred.'); }
             return response.json();
         },
 
-        async runVerification(data) {
-            this.elements.processingtitle.textContent = "Verifying Businesses...";
-            this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
-            this.navigateTo('processing');
-            this.state.resultsData = [];
-            const total = data.length;
-
+        async runVerification() {
+            this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
+            this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
             for (let i = 0; i < total; i++) {
-                const item = data[i];
-                try {
-                    const result = await this.callSecureFunction('verify-place', { business: item });
-                    this.state.resultsData.push(result);
-                } catch (error) {
-                    this.state.resultsData.push({ ...item, Status: 'API Error', 'Current Occupant': error.message, 'Verification Link': '#' });
-                }
-                const progress = ((i + 1) / total) * 100;
-                this.elements.progressbar.style.width = `${progress}%`;
-                this.elements.progresstext.textContent = `Verifying: ${item['Business Name']} (${i + 1} of ${total})`;
+                const item = this.state.mappedData[i];
+                try { const result = await this.callSecureFunction('verify-place', { business: item }); this.state.resultsData.push(result); } catch (error) { this.state.resultsData.push({ ...item, Status: 'API Error', 'Current Occupant': error.message, 'Verification Link': '#' }); }
+                const progress = ((i + 1) / total) * 100; this.elements.progressbar.style.width = `${progress}%`; this.elements.progresstext.textContent = `Verifying: ${item['Business Name']} (${i + 1} of ${total})`;
             }
-            this.renderVerificationResults();
-            this.navigateTo('results');
+            this.renderVerificationResults(); this.navigateTo('results');
         },
 
-        async runProspecting(data) {
-            this.elements.processingtitle.textContent = "Finding New Friends...";
-            this.elements.processingsubtitle.textContent = "Analyzing your list and searching for new prospects. This may take a few moments.";
-            this.elements.progresstext.textContent = "Analyzing business types with Gemini API...";
+        async runProspecting(keyword) {
+            this.elements.processingtitle.textContent = "Finding New Friends..."; this.elements.processingsubtitle.textContent = `Searching for '${keyword}' in your provided zip codes.`;
+            this.elements.progresstext.textContent = "Sending request to our secure prospecting service...";
             this.navigateTo('processing');
             try {
-                const result = await this.callSecureFunction('find-prospects', { businesses: data });
+                const result = await this.callSecureFunction('find-prospects', { businesses: this.state.mappedData, keyword: keyword });
                 this.state.resultsData = result.prospects;
-                this.renderProspectingResults();
-                this.navigateTo('results');
-            } catch (error) {
-                this.showError('mapping', `Prospecting failed: ${error.message}`);
-                this.navigateTo('mapping');
-            }
+                this.renderProspectingResults(); this.navigateTo('results');
+            } catch (error) { this.showError('prospectinput', `Prospecting failed: ${error.message}`); this.navigateTo('prospectinput'); }
         },
         
         renderVerificationResults() {
-            this.elements.resultstitle.textContent = "Verification Results";
-            this.elements.resultssubtitle.textContent = "The 'Status' column is editable. Click to make changes.";
+            this.elements.resultstitle.textContent = "Verification Results"; this.elements.resultssubtitle.textContent = "The 'Status' column is editable. Click to make changes.";
             const headers = ['Business Name', 'Address', 'Status', 'Current Occupant', 'Verification Link'];
             const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
             const rowsHtml = this.state.resultsData.map((res, index) => {
                 const status = res['Status'] || 'Not Found';
                 const colors = { 'Verified': 'bg-green-100 text-green-800', 'Not Found': 'bg-red-100 text-red-800', 'API Error': 'bg-yellow-100 text-yellow-800' };
-                const cells = `
-                    <td class="p-3 font-medium">${res['Business Name'] || ''}</td>
-                    <td class="p-3">${res['Address'] || ''}</td>
-                    <td class="p-3 status-cell" contenteditable="true" data-row-index="${index}"><span class="px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-slate-100'}">${status}</span></td>
-                    <td class="p-3">${res['Current Occupant'] || 'N/A'}</td>
-                    <td class="p-3"><a href="${res['Verification Link']}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
+                const cells = `<td class="p-3 font-medium">${res['Business Name'] || ''}</td> <td class="p-3">${res['Address'] || ''}</td> <td class="p-3 status-cell" contenteditable="true" data-row-index="${index}"><span class="px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-slate-100'}">${status}</span></td> <td class="p-3">${res['Current Occupant'] || 'N/A'}</td> <td class="p-3"><a href="${res['Verification Link']}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
                 return `<tr class="border-t">${cells}</tr>`;
             }).join('');
             this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
         },
 
         renderProspectingResults() {
-            this.elements.resultstitle.textContent = "New Prospects Found";
-            this.elements.resultssubtitle.textContent = "Here are new businesses we found based on your list.";
+            this.elements.resultstitle.textContent = "New Prospects Found"; this.elements.resultssubtitle.textContent = "Here are new businesses we found based on your list.";
             const headers = ['Business Name', 'Address', 'Phone Number', 'Quick Search'];
             const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
             const rowsHtml = this.state.resultsData.map(res => {
                 const searchQuery = `https://www.google.com/search?q=${encodeURIComponent(res['Business Name'] + ' ' + res['Address'])}`;
-                const cells = `
-                    <td class="p-3 font-medium">${res['Business Name'] || ''}</td>
-                    <td class="p-3">${res['Address'] || ''}</td>
-                    <td class="p-3">${res['Phone Number'] || 'N/A'}</td>
-                    <td class="p-3"><a href="${searchQuery}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
+                const cells = `<td class="p-3 font-medium">${res['Business Name'] || ''}</td> <td class="p-3">${res['Address'] || ''}</td> <td class="p-3">${res['Phone Number'] || 'N/A'}</td> <td class="p-3"><a href="${searchQuery}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
                 return `<tr class="border-t">${cells}</tr>`;
             }).join('');
             this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
         },
         
         async exportResults() {
-            if (document.querySelector('.status-cell')) {
-                 document.querySelectorAll('.status-cell').forEach(cell => {
-                    const index = parseInt(cell.dataset.rowIndex, 10);
-                    if (this.state.resultsData[index]) this.state.resultsData[index]['Status'] = cell.textContent;
-                });
-            }
-
+            if (document.querySelector('.status-cell')) { document.querySelectorAll('.status-cell').forEach(cell => { const index = parseInt(cell.dataset.rowIndex, 10); if (this.state.resultsData[index]) this.state.resultsData[index]['Status'] = cell.textContent; }); }
             if (!this.state.resultsData.length) return;
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Results');
+            const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Results');
             worksheet.columns = Object.keys(this.state.resultsData[0]).map(h => ({ header: h, key: h, width: h.toLowerCase().includes('address') ? 40 : 25 }));
             this.state.resultsData.forEach(row => worksheet.addRow(row));
-            const buffer = await workbook.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), 'verification_results.xlsx');
+            const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), 'verification_results.xlsx');
         },
 
         restart() {
-            this.state.fileHeaders = [];
-            this.state.fileData = [];
-            this.state.resultsData = [];
-            this.elements.fileinput.value = '';
-            this.navigateTo('upload');
+            this.state = { fileHeaders: [], fileData: [], mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions" };
+            this.elements.fileinput.value = ''; this.navigateTo('upload');
         },
         
-        showError(step, message) {
-            const el = this.elements[`${step}Error`];
-            if (el) { el.textContent = message; el.classList.toggle('hidden', !message); }
-        }
+        showError(step, message) { const el = this.elements[`${step}Error`]; if (el) { el.textContent = message; el.classList.toggle('hidden', !message); } }
     };
 
     App.init();
