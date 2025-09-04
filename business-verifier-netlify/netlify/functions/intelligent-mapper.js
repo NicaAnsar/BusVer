@@ -40,8 +40,10 @@ Example JSON response:
 }
 `;
 
-        // --- Make the API call to the Gemini LLM ---
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        // --- Make the API call to the Gemini LLM using the updated model name ---
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const geminiResponse = await fetch(geminiApiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: llmPrompt }] }] }),
@@ -76,3 +78,4 @@ Example JSON response:
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
+
