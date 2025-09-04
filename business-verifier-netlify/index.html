@@ -71,31 +71,11 @@
             </header>
 
             <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 min-h-[400px] relative">
-                <!-- SVG Mascot Definitions -->
-                <svg width="0" height="0" style="position:absolute">
-                  <defs>
-                     <g id="detective-mascot">
-                        <path d="M128.5,299 C140,285 140,268 128,252 C120,241 120,223 126,206 L130,194 C132,188 128,182 122,181 C109,179 100,167 100,154 L100,138 C100,131 94,125 87,125 L73,125 C66,125 60,131 60,138 L60,154 C60,167 51,179 38,181 C32,182 28,188 30,194 L34,206 C40,223 40,241 32,252 C20,268 20,285 31.5,299" fill="#fef3c7"/>
-                        <path d="M37,80 C37,51.7 59.7,29 88,29 L112,29 C140.3,29 163,51.7 163,80 L163,91 C163,96.5 158.5,101 153,101 L47,101 C41.5,101 37,96.5 37,91 L37,80 z" fill="#4a3b33"/>
-                        <path d="M138,81 C138,89.8 130.8,97 122,97 L78,97 C69.2,97 62,89.8 62,81 L62,79 C62,70.2 69.2,63 78,63 L122,63 C130.8,63 138,70.2 138,79 L138,81 z" fill="#b91c1c"/>
-                        <path d="M141,60 C144.3,60 147,57.3 147,54 L147,44 C147,40.7 144.3,38 141,38 L131,38 C127.7,38 125,40.7 125,44 L125,54 C125,57.3 127.7,60 131,60 L141,60 z" fill="#facc15" />
-                        <path d="M50,111 L150,111 L150,121 L50,121 z" fill="#d4d4d8"/>
-                        <path d="M91,155 C91,159.4 87.4,163 83,163 L77,163 C72.6,163 69,159.4 69,155 L69,135 C69,130.6 72.6,127 77,127 L83,127 C87.4,127 91,130.6 91,135 L91,155 z" fill="#64748b"/>
-                        <path d="M80,187 L116,163 L105,130 L65,130 z" fill="#881337" opacity="0.6"/>
-                        <path d="M110,180 L130,220 L150,220 L130,160 z" fill="#312e2a" />
-                        <path d="M50,180 L30,220 L10,220 L30,160 z" fill="#312e2a" />
-                        <path d="M100,125 L130,150 L140,250 L110,250 z" fill="#312e2a"/>
-                        <path d="M60,125 L30,150 L20,250 L50,250 z" fill="#312e2a"/>
-                        <path d="M125,180 L105,250 L55,250 L35,180 C35,170 65,160 80,160 C95,160 125,170 125,180 z" fill="#475569" />
-                        <path d="M80,160 C70,165 70,175 80,180 C90,175 90,165 80,160 z" fill="#fcd34d"/>
-                        <path d="M100,299 C100,299 110,285 100,270 C90,255 80,260 80,260" stroke="#a16207" stroke-width="2" fill="none"/>
-                        <path d="M60,299 C60,299 50,285 60,270 C70,255 80,260 80,260" stroke="#a16207" stroke-width="2" fill="none"/>
-                        <circle cx="65" cy="100" r="3" fill="#e11d48"/>
-                        <circle cx="95" cy="100" r="3" fill="#e11d48"/>
-                        <path d="M75,108 C78,112 82,112 85,108" stroke="#ef4444" stroke-width="1.5" fill="none"/>
-                    </g>
-                  </defs>
-                </svg>
+                
+                <div id="control-buttons" class="absolute top-4 right-4 space-x-2 hidden">
+                    <button id="stop-button" class="bg-red-600 text-white font-semibold py-1 px-3 text-sm rounded-lg hover:bg-red-700 transition-colors">Stop</button>
+                    <button id="restart-button" class="border border-slate-300 text-slate-700 font-semibold py-1 px-3 text-sm rounded-lg hover:bg-slate-100 transition-colors">Start Over</button>
+                </div>
 
                 <!-- Step 1: File Upload -->
                 <div id="step-upload" class="step active">
@@ -117,7 +97,8 @@
                         </div>
                         <div class="mascot-container">
                              <div class="speech-bubble">My investigations work best with clean spreadsheets!</div>
-                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
+                             <!-- Replace this placeholder URL with a direct link to your PNG mascot image -->
+                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -146,7 +127,7 @@
                             </div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
+                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -169,7 +150,7 @@
                             </div>
                         </div>
                          <div class="mascot-container">
-                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
+                            <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -188,11 +169,7 @@
                             </div>
                         </div>
                         <div class="mascot-container">
-                            <svg viewBox="0 0 160 300">
-                                <use href="#detective-mascot"/>
-                                <circle cx="40" cy="180" r="15" fill="none" stroke="#475569" stroke-width="2"/>
-                                <line x1="30" y1="195" x2="20" y2="205" stroke="#475569" stroke-width="2"/>
-                            </svg>
+                            <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -208,7 +185,6 @@
                                         <p id="results-subtitle" class="text-slate-500 mt-1">Review the data and make changes as needed.</p>
                                     </div>
                                      <div class="flex gap-2">
-                                        <button id="restart-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors">Start Over</button>
                                         <button id="export-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Export to Excel</button>
                                     </div>
                                 </div>
@@ -216,11 +192,7 @@
                             <div id="results-table-container" class="mt-6 rounded-lg border"></div>
                         </div>
                         <div class="mascot-container">
-                            <svg viewBox="0 0 160 300">
-                                <use href="#detective-mascot"/>
-                                <!-- Happy pose from before, but slight adjustments to eyes -->
-                                 <path d="M60,100 Q80,110 100,100" fill="none" stroke="#e11d48" stroke-width="2"/>
-                            </svg>
+                             <img src="https://i.ibb.co/9v0d9p3/mascot-pose-1.png" alt="Detective Mascot" class="h-full object-contain">
                         </div>
                     </div>
                 </div>
@@ -246,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         init() { this.cacheElements(); this.bindEvents(); },
 
         cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'parsing-title', 'parsing-subtitle', 'action-choice-error', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
+            const ids = ['dropzone', 'file-input', 'upload-error', 'parsing-title', 'parsing-subtitle', 'control-buttons', 'stop-button', 'restart-button', 'action-choice-error', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button'];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
                 upload: document.getElementById('step-upload'),
@@ -258,10 +230,20 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         },
 
-        navigateTo(step) { Object.values(this.elements.steps).forEach(s => s.classList.remove('active')); this.elements.steps[step]?.classList.add('active'); },
+        navigateTo(step) {
+            Object.values(this.elements.steps).forEach(s => s.classList.remove('active'));
+            this.elements.steps[step]?.classList.add('active');
+            
+            const controlButtonSteps = ['actionchoice', 'prospectinput', 'processing', 'results'];
+            if (controlButtonSteps.includes(step)) {
+                this.elements.controlbuttons.classList.remove('hidden');
+            } else {
+                this.elements.controlbuttons.classList.add('hidden');
+            }
+        },
 
         bindEvents() {
-            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton } = this.elements;
+            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton, stopbutton } = this.elements;
             dropzone.addEventListener('click', () => fileinput.click());
             dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-blue-500'); });
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
@@ -272,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startprospectingbutton.addEventListener('click', () => this.handleProspectSearch());
             exportbutton.addEventListener('click', () => this.exportResults());
             restartbutton.addEventListener('click', () => this.restart());
+            stopbutton.addEventListener('click', () => this.restart());
         },
 
         handleFile(file) {
@@ -312,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async onFileParsed(headers, data) {
             this.state.fileData = data;
             const sampleData = data.slice(0, 5);
-
             this.elements.parsingtitle.textContent = "AI Analyzing Columns...";
             this.elements.parsingsubtitle.textContent = "Our detective is figuring out your spreadsheet structure.";
             try {
@@ -356,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async runVerification() {
             if (this.state.mappedData.length === 0) this.mapDataWithAI();
             if(this.state.mappedData.length === 0) return;
-
             this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
             this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
             for (let i = 0; i < total; i++) {
@@ -370,7 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
         async runProspecting(keyword) {
              if (this.state.mappedData.length === 0) this.mapDataWithAI();
              if(this.state.mappedData.length === 0) return;
-
             this.elements.processingtitle.textContent = "Finding New Friends..."; this.elements.processingsubtitle.textContent = `Searching for '${keyword}' in your provided zip codes.`;
             this.elements.progresstext.textContent = "Sending request to our secure prospecting service...";
             this.navigateTo('processing');
