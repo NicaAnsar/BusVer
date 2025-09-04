@@ -45,13 +45,9 @@
                 <svg width="0" height="0" style="position:absolute">
                   <defs>
                     <g id="detective-base" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <!-- Head -->
                       <path d="M75,50 a25,25 0 1,1 -50,0 a25,25 0 1,1 50,0"/>
-                      <!-- Hair -->
                       <path d="M20,30 Q50,10 80,30 M25,50 Q0,70 25,90 M75,50 Q100,70 75,90"/>
-                      <!-- Body -->
                       <path d="M50,75 V150 L30,220 H70 L50,150"/>
-                      <!-- Eyes -->
                       <circle cx="40" cy="45" r="2"/><circle cx="60" cy="45" r="2"/>
                     </g>
                   </defs>
@@ -62,7 +58,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3">
                         <div class="lg:col-span-2">
                             <div class="text-center lg:text-left">
-                                <h2 class="text-2xl font-semibold text-slate-800">Step 1: Upload File</h2>
+                                <h2 class="text-2xl font-semibold text-slate-800">Step 1: Upload Your List</h2>
                                 <p class="text-slate-500 mt-1">Select or drag a CSV or Excel file to get started.</p>
                             </div>
                             <div id="dropzone" class="mt-8 p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors border-slate-300 bg-slate-50 hover:border-blue-500">
@@ -76,51 +72,36 @@
                             <div id="upload-error" class="mt-4 text-center lg:text-left text-red-600"></div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250">
-                                <use href="#detective-base"/>
-                                <!-- Arm pointing -->
-                                <path d="M50,100 L10,120" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                             </svg>
+                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L10,120" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 1.5: Parsing File -->
+                <!-- Step 1.5: AI Parsing & Mapping -->
                 <div id="step-parsing" class="step">
                     <div class="text-center flex flex-col items-center justify-center h-full min-h-[300px]">
-                        <svg class="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <h2 class="text-2xl font-semibold text-slate-800">Reading Your Spreadsheet...</h2>
-                        <p class="text-slate-500 mt-1">Please wait, this may take a moment for large files.</p>
+                        <svg class="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <h2 id="parsing-title" class="text-2xl font-semibold text-slate-800">Reading Your Spreadsheet...</h2>
+                        <p id="parsing-subtitle" class="text-slate-500 mt-1">Please wait, this may take a moment for large files.</p>
                     </div>
                 </div>
-
-                <!-- Step 2: Column Mapping -->
-                <div id="step-mapping" class="step">
+                
+                <!-- Step 2: Action Choice -->
+                <div id="step-action-choice" class="step">
                      <div class="grid grid-cols-1 lg:grid-cols-3">
-                        <div class="lg:col-span-2">
+                        <div class="lg:col-span-2 text-center lg:text-left">
                             <div>
-                                <h2 class="text-2xl font-semibold text-slate-800">Step 2: Map Columns</h2>
-                                <p class="text-slate-500 mt-1">Match your spreadsheet columns to the required data fields.</p>
+                                <h2 class="text-2xl font-semibold text-slate-800">Step 2: Choose Your Path</h2>
+                                <p class="text-slate-500 mt-1">Our AI has analyzed your spreadsheet. How would you like to proceed?</p>
                             </div>
-                            <div id="mapping-error" class="my-4 p-3 text-red-700 bg-red-100 rounded-lg hidden"></div>
-                            <div id="mapping-table-container" class="mt-6 rounded-lg border"></div>
-                            <div class="flex justify-end mt-6 space-x-4">
-                                <button id="prospect-button-init" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Find Me More Friends</button>
-                                <button id="verify-button" class="bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-800 transition-colors">Start Verification</button>
+                            <div id="action-choice-error" class="my-4 p-3 text-red-700 bg-red-100 rounded-lg hidden"></div>
+                            <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                                <button id="prospect-button-init" class="bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto">Find Me More Friends</button>
+                                <button id="verify-button" class="bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg hover:bg-slate-800 transition-colors w-full sm:w-auto">Start Verification</button>
                             </div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250">
-                                <use href="#detective-base"/>
-                                <!-- Arm with notepad -->
-                                <path d="M50,100 L20,110" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <rect x="5" y="100" width="20" height="30" rx="2" stroke="#475569" fill="#f8fafc" stroke-width="1.5"/>
-                                <line x1="10" y1="108" x2="20" y2="108" stroke="#cbd5e1" stroke-width="1"/>
-                                <line x1="10" y1="115" x2="20" y2="115" stroke="#cbd5e1" stroke-width="1"/>
-                             </svg>
+                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L20,110 M50,100 L80,110" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                     </div>
                 </div>
@@ -143,16 +124,12 @@
                             </div>
                         </div>
                         <div class="mascot-container">
-                            <svg viewBox="0 0 100 250">
-                                <use href="#detective-base"/>
-                                <!-- Arm pointing to input -->
-                                <path d="M50,100 L20,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L20,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: Processing (Verification or Prospecting) -->
+                <!-- Step 3: Processing -->
                 <div id="step-processing" class="step">
                      <div class="grid grid-cols-1 lg:grid-cols-3">
                         <div class="lg:col-span-2">
@@ -161,20 +138,12 @@
                                 <p id="processing-subtitle" class="text-slate-500 mt-1">Please wait while we process your request.</p>
                             </div>
                              <div class="mt-8 flex flex-col items-center gap-4">
-                                <div class="w-full bg-slate-200 rounded-full h-2.5">
-                                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                                </div>
+                                <div class="w-full bg-slate-200 rounded-full h-2.5"><div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div>
                                 <p id="progress-text" class="text-slate-600"></p>
                             </div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250">
-                                <use href="#detective-base"/>
-                                <!-- Arm with magnifying glass -->
-                                 <path d="M50,100 L30,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                 <circle cx="20" cy="85" r="8" stroke="#475569" stroke-width="2"/>
-                                 <line x1="14" y1="79" x2="26" y2="73" stroke="#475569" stroke-width="1.5"/>
-                             </svg>
+                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L30,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="85" r="8" stroke="#475569" stroke-width="2"/><line x1="14" y1="79" x2="26" y2="73" stroke="#475569" stroke-width="1.5"/></svg>
                         </div>
                     </div>
                 </div>
@@ -198,12 +167,7 @@
                             <div id="results-table-container" class="mt-6 rounded-lg border"></div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250">
-                                <use href="#detective-base"/>
-                                <!-- Happy pose -->
-                                <path d="M40,55 q5,5 10,0 q5,-5 10,0" fill="none" stroke="#475569" stroke-width="1.5"/>
-                                <path d="M50,100 L60,120 M50,100 L40,120" fill="none" stroke="#475569" stroke-width="2"/>
-                             </svg>
+                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M40,55 q5,5 10,0 q5,-5 10,0" fill="none" stroke="#475569" stroke-width="1.5"/><path d="M50,100 L60,120 M50,100 L40,120" fill="none" stroke="#475569" stroke-width="2"/></svg>
                         </div>
                     </div>
                 </div>
@@ -218,36 +182,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     const App = {
         state: {
-            fileHeaders: [],
             fileData: [],
+            aiMapping: {},
             mappedData: [],
             resultsData: [],
             secureProxyUrl: "/.netlify/functions",
         },
         elements: {},
 
-        init() {
-            this.cacheElements();
-            this.bindEvents();
-        },
+        init() { this.cacheElements(); this.bindEvents(); },
 
         cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
+            const ids = ['dropzone', 'file-input', 'upload-error', 'parsing-title', 'parsing-subtitle', 'action-choice-error', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
             ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
             this.elements.steps = {
                 upload: document.getElementById('step-upload'),
                 parsing: document.getElementById('step-parsing'),
-                mapping: document.getElementById('step-mapping'),
+                actionchoice: document.getElementById('step-action-choice'),
                 prospectinput: document.getElementById('step-prospect-input'),
                 processing: document.getElementById('step-processing'),
                 results: document.getElementById('step-results'),
             };
         },
 
-        navigateTo(step) {
-            Object.values(this.elements.steps).forEach(s => s.classList.remove('active'));
-            this.elements.steps[step]?.classList.add('active');
-        },
+        navigateTo(step) { Object.values(this.elements.steps).forEach(s => s.classList.remove('active')); this.elements.steps[step]?.classList.add('active'); },
 
         bindEvents() {
             const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton } = this.elements;
@@ -256,8 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
             dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('border-blue-500'); this.handleFile(e.dataTransfer.files[0]); });
             fileinput.addEventListener('change', e => this.handleFile(e.target.files[0]));
-            verifybutton.addEventListener('click', () => this.handleProcessClick('verify'));
-            prospectbuttoninit.addEventListener('click', () => this.handleProcessClick('prospect-init'));
+            verifybutton.addEventListener('click', () => this.runVerification());
+            prospectbuttoninit.addEventListener('click', () => this.navigateTo('prospectinput'));
             startprospectingbutton.addEventListener('click', () => this.handleProspectSearch());
             exportbutton.addEventListener('click', () => this.exportResults());
             restartbutton.addEventListener('click', () => this.restart());
@@ -265,41 +223,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         handleFile(file) {
             if (!file) return;
-            this.showError('upload', '');
-            this.navigateTo('parsing'); 
+            this.showError('upload', ''); this.navigateTo('parsing');
             setTimeout(() => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (ext === 'csv') this.parseCsv(file);
                 else if (['xlsx', 'xls'].includes(ext)) this.parseExcel(file);
-                else {
-                    this.showError('upload', 'Unsupported file type. Please use CSV, XLSX, or XLS.');
-                    this.navigateTo('upload');
-                }
+                else { this.showError('upload', 'Unsupported file type.'); this.navigateTo('upload'); }
             }, 100);
         },
 
-        parseCsv(file) {
-            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } });
-        },
+        parseCsv(file) { Papa.parse(file, { header: true, skipEmptyLines: true, preview: 5, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } }); },
         
         parseExcel(file) {
             const reader = new FileReader();
             reader.onload = async e => {
                 try {
-                    const workbook = new ExcelJS.Workbook();
-                    await workbook.xlsx.load(e.target.result);
-                    const worksheet = workbook.worksheets[0];
-                    let headerRowNumber = -1, headers = [];
+                    const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(e.target.result);
+                    const worksheet = workbook.worksheets[0]; let headerRowNumber = -1, headers = [];
                     worksheet.eachRow((row, rowNum) => { if (row.values.filter(Boolean).length > 0 && headerRowNumber < 0) { headers = row.values.filter(Boolean).map(h => h.toString().trim()); headerRowNumber = rowNum; } });
                     if (headers.length === 0) throw new Error("Could not find a valid header row.");
                     const data = [];
                     worksheet.eachRow((row, rowNumber) => {
-                        if (rowNumber > headerRowNumber) {
+                        if (rowNumber > headerRowNumber && data.length < 5) { // Only read first 5 data rows for mapping
                             const rowData = {}; let hasData = false;
-                            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-                                const header = headers[colNumber - 1];
-                                if (header) { let val = cell.value?.toString() || ''; rowData[header] = val; if(val) hasData = true; }
-                            });
+                            row.eachCell({ includeEmpty: true }, (cell, colNumber) => { const header = headers[colNumber - 1]; if (header) { let val = cell.value?.toString() || ''; rowData[header] = val; if(val) hasData = true; } });
                             if (hasData) data.push(rowData);
                         }
                     });
@@ -309,42 +256,33 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsArrayBuffer(file);
         },
 
-        onFileParsed(headers, data) {
-            this.state.fileHeaders = headers; this.state.fileData = data; this.renderMappingTable(); this.navigateTo('mapping');
+        async onFileParsed(headers, sampleData) {
+            this.elements.parsingtitle.textContent = "AI Analyzing Columns...";
+            this.elements.parsingsubtitle.textContent = "Our detective is figuring out your spreadsheet structure.";
+            try {
+                const { mapping } = await this.callSecureFunction('intelligent-mapper', { headers, sampleData });
+                this.state.aiMapping = mapping;
+                this.mapDataWithAI(); // Remap the full dataset
+                this.navigateTo('actionchoice');
+            } catch (error) {
+                this.showError('upload', `AI Mapping Failed: ${error.message}. Please check file format.`);
+                this.navigateTo('upload');
+            }
         },
 
-        renderMappingTable() {
-            const TARGET_FIELDS = ['Business Name', 'Address', 'Phone', 'Email'];
-            const autoDetect = h => { const l = (h || '').toLowerCase(); if (l.includes('name')) return 'Business Name'; if (l.includes('address')) return 'Address'; return ''; };
-            let tableHtml = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-3 text-left font-semibold">Your Column</th><th class="p-3 text-left font-semibold">Map to Field</th></tr></thead><tbody>`;
-            const detected = {};
-            this.state.fileHeaders.forEach(h => { const d = autoDetect(h); if (d && !Object.values(detected).includes(d)) detected[h] = d; });
-            this.state.fileHeaders.forEach(h => {
-                const sel = detected[h] || ''; let opts = '<option value="ignore">Ignore</option>';
-                TARGET_FIELDS.forEach(f => opts += `<option value="${f}" ${sel === f ? 'selected' : ''}>${f}</option>`);
-                tableHtml += `<tr class="border-t"><td class="p-3 font-medium">${h}</td><td class="p-3"><select data-header="${h}" class="mapping-select w-full p-2 border rounded-md bg-white">${opts}</select></td></tr>`;
-            });
-            this.elements.mappingtablecontainer.innerHTML = tableHtml + '</tbody></table>';
-        },
-
-        handleProcessClick(type) {
-            this.showError('mapping', ''); const mappings = {}; const fields = new Set();
-            document.querySelectorAll('.mapping-select').forEach(s => {
-                if (s.value !== 'ignore') {
-                    if (fields.has(s.value)) return this.showError('mapping', `Field '${s.value}' mapped multiple times.`);
-                    mappings[s.dataset.header] = s.value; fields.add(s.value);
-                }
-            });
-            if (this.elements.mappingerror.textContent) return;
+        mapDataWithAI() {
+            const { aiMapping, fileData } = this.state;
+            const mappedFields = Object.values(aiMapping);
             this.state.mappedData = this.state.fileData.map(row => {
                 const newRow = {};
-                fields.forEach(field => { const header = Object.keys(mappings).find(h => mappings[h] === field); newRow[field] = row[header] || ''; });
+                mappedFields.forEach(field => {
+                    const header = Object.keys(aiMapping).find(h => aiMapping[h] === field);
+                    newRow[field] = row[header] || '';
+                });
                 return newRow;
             });
-            if (type === 'verify') this.runVerification();
-            else if (type === 'prospect-init') this.navigateTo('prospectinput');
         },
-
+        
         handleProspectSearch() {
             const keyword = this.elements.prospectkeyword.value.trim();
             this.elements.prospectinputerror.textContent = '';
@@ -359,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async runVerification() {
+            if (this.state.fileData.length > 0 && this.state.mappedData.length === 0) this.mapDataWithAI(); // Ensure data is mapped if coming from a reload
             this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
             this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
             for (let i = 0; i < total; i++) {
@@ -370,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async runProspecting(keyword) {
+             if (this.state.fileData.length > 0 && this.state.mappedData.length === 0) this.mapDataWithAI();
             this.elements.processingtitle.textContent = "Finding New Friends..."; this.elements.processingsubtitle.textContent = `Searching for '${keyword}' in your provided zip codes.`;
             this.elements.progresstext.textContent = "Sending request to our secure prospecting service...";
             this.navigateTo('processing');
@@ -415,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         restart() {
-            this.state = { fileHeaders: [], fileData: [], mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions" };
+            this.state = { fileData: [], aiMapping: {}, mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions" };
             this.elements.fileinput.value = ''; this.navigateTo('upload');
         },
         
