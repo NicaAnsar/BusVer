@@ -1,75 +1,80 @@
 // This function uses the modern 'fetch' built into Netlify's environment.
 
 exports.handler = async (event) => {
-    // Securely access the API keys stored as environment variables in your Netlify site settings.
-    const { GOOGLE_PLACES_API_KEY, GEMINI_API_KEY } = process.env;
+    // Securely access the Gemini API key stored as an environment variable in your Netlify site settings.
+    const { GEMINI_API_KEY } = process.env;
 
-    // Check if the necessary API keys are configured.
-    if (!GOOGLE_PLACES_API_KEY || !GEMINI_API_KEY) {
-        return { statusCode: 500, body: JSON.stringify({ error: 'API keys are not configured correctly on Netlify.' }) };
+    // Check if the API key is configured.
+    if (!GEMINI_API_KEY) {
+        return { statusCode: 500, body: JSON.stringify({ error: 'Gemini API key is not configured.' }) };
     }
 
     try {
-        // Parse the data sent from the website (the user's current business list and the prospect keyword).
-        const { businesses, keyword } = JSON.parse(event.body);
-        if (!businesses || businesses.length === 0) {
-            return { statusCode: 400, body: JSON.stringify({ error: 'A list of businesses is required to find prospects.' }) };
-        }
-        if (!keyword) {
-            return { statusCode: 400, body: JSON.stringify({ error: 'A keyword is required to find prospects.' }) };
+        // Parse the data sent from the website (headers and sample rows).
+        const { headers, sampleData } = JSON.parse(event.body);
+        if (!headers || headers.length === 0) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'Spreadsheet headers are required for mapping.' }) };
         }
 
-        const existingNamesSet = new Set(businesses.map(b => b['Business Name'].toLowerCase()));
+        // --- Construct the prompt for the Gemini LLM ---
+        // This prompt asks the AI to act as a data processor and return a structured JSON response.
+        const llmPrompt = `
+You are an expert data processor. Analyze the following spreadsheet headers and the first few rows of data.
+Your task is to determine which columns correspond to the following standard fields: 'Business Name', 'Address', 'Phone', 'Email'.
 
-        // --- Step 1: Extract unique zip codes and prepare for searching ---
-        const zipRegex = /\b\d{5}\b/;
-        const uniqueZips = [...new Set(businesses.map(b => (b['Address'] || '').match(zipRegex)?.[0]).filter(Boolean))];
-        const allProspects = new Map();
+Return your answer as a single, valid JSON object where the keys are the original column headers and the values are the corresponding standard field.
+If a column does not map to any standard field, omit it from the JSON.
+If a standard field is not found in the spreadsheet, omit it from your response.
+Ensure the output is only the JSON object and nothing else.
 
-        // Helper function to convert a zip code into map coordinates using the Geocoding API.
-        const getCoordsForZip = async (zip) => {
-            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${zip}&key=${GOOGLE_PLACES_API_KEY}`;
-            const response = await fetch(geocodeUrl);
-            const data = await response.json();
-            if (data.status === 'OK' && data.results[0]) {
-                return data.results[0].geometry.location;
-            }
-            return null;
-        };
+Headers: ${JSON.stringify(headers)}
+
+Sample Data:
+${sampleData.map(row => JSON.stringify(row)).join('\n')}
+
+Example JSON response:
+{
+  "Company Name": "Business Name",
+  "Full Address": "Address",
+  "Contact Number": "Phone"
+}
+`;
+
+        // --- Make the API call to the Gemini LLM using the updated model name ---
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
         
-        // --- Step 2: Perform a targeted "Nearby Search" for each zip code and keyword ---
-        for (const zip of uniqueZips) {
-            const location = await getCoordsForZip(zip);
-            if (!location) continue; // Skip if the zip code can't be located.
+        const geminiResponse = await fetch(geminiApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: llmPrompt }] }] }),
+        });
 
-            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=5000&keyword=${encodeURIComponent(keyword)}&key=${GOOGLE_PLACES_API_KEY}`;
-            const response = await fetch(nearbyUrl);
-            const data = await response.json();
-
-            if (data.status === 'OK') {
-                for (const place of data.results) {
-                    const name = place.name;
-                    // Check if the business is new and not one from the original list.
-                    if (name && !existingNamesSet.has(name.toLowerCase())) {
-                        // Use a Map to automatically handle and remove duplicate prospects.
-                        allProspects.set(name.toLowerCase(), {
-                            'Business Name': name,
-                            'Address': place.vicinity || 'N/A',
-                            'Phone Number': place.formatted_phone_number || 'N/A',
-                        });
-                    }
-                }
-            }
+        if (!geminiResponse.ok) {
+            const errorBody = await geminiResponse.text();
+            console.error("Gemini API Error:", errorBody);
+            return { statusCode: 500, body: JSON.stringify({ error: 'Failed to get a response from the AI mapping service.' }) };
         }
+
+        const geminiData = await geminiResponse.json();
         
-        // Return the final, clean list of new business prospects.
+        // --- Clean up and parse the response from the LLM ---
+        const rawText = geminiData.candidates[0].content.parts[0].text;
+        const jsonText = rawText.replace(/```json|```/g, '').trim();
+        const mapping = JSON.parse(jsonText);
+
+        if (!mapping || Object.keys(mapping).length === 0) {
+            throw new Error("The AI could not identify standard business fields in your spreadsheet.");
+        }
+
+        // Return the final, clean mapping object.
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prospects: Array.from(allProspects.values()) }),
+            body: JSON.stringify({ mapping }),
         };
+
     } catch (error) {
-        console.error('Prospecting Function Error:', error);
+        console.error('Intelligent Mapper Function Error:', error);
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
