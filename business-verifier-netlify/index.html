@@ -1,340 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Verification Assistant</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        .step { display: none; }
-        .step.active { display: block; }
-        [contenteditable]:focus { outline: 2px solid #3b82f6; background-color: #eff6ff; }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-900">
+// This function uses the modern 'fetch' built into Netlify's environment.
 
-    <div class="flex flex-col items-center justify-center min-h-screen p-4">
-        <div class="w-full max-w-5xl mx-auto">
-            <header class="text-center mb-8">
-                <h1 class="text-4xl font-bold tracking-tight text-slate-800">Business Verification & Prospecting</h1>
-                <p class="text-slate-600 mt-2">The secure, reliable tool for verifying and finding new customers.</p>
-            </header>
+exports.handler = async (event) => {
+    // Securely access the API key stored as an environment variable in your Netlify site settings.
+    const { GOOGLE_PLACES_API_KEY } = process.env;
 
-            <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 min-h-[400px]">
-                <!-- Step 1: File Upload -->
-                <div id="step-upload" class="step active">
-                    <div class="text-center">
-                        <h2 class="text-2xl font-semibold text-slate-800">Step 1: Upload File</h2>
-                        <p class="text-slate-500 mt-1">Select or drag a CSV or Excel file to get started.</p>
-                    </div>
-                    <div id="dropzone" class="mt-8 p-12 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors border-slate-300 bg-slate-50 hover:border-blue-500">
-                        <input type="file" id="file-input" class="hidden" accept=".csv, .xlsx, .xls">
-                        <div class="flex flex-col items-center gap-2 text-slate-600">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                            <p>Drag & drop a file here, or <span class="font-semibold text-blue-600">click to select</span></p>
-                            <p class="text-xs text-slate-500">Supported formats: CSV, XLSX, XLS</p>
-                        </div>
-                    </div>
-                    <div id="upload-error" class="mt-4 text-center text-red-600"></div>
-                </div>
+    // Check if the API key is configured.
+    if (!GOOGLE_PLACES_API_KEY) {
+        return { statusCode: 500, body: JSON.stringify({ error: 'Google Places API key is not configured.' }) };
+    }
 
-                <!-- Step 1.5: Parsing File -->
-                <div id="step-parsing" class="step">
-                    <div class="text-center flex flex-col items-center justify-center h-full min-h-[300px]">
-                        <svg class="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <h2 class="text-2xl font-semibold text-slate-800">Reading Your Spreadsheet...</h2>
-                        <p class="text-slate-500 mt-1">Please wait, this may take a moment for large files.</p>
-                    </div>
-                </div>
+    try {
+        // Parse the data sent from the website, which now includes the user's desired keyword.
+        const { businesses, keyword } = JSON.parse(event.body);
+        if (!businesses || businesses.length === 0) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'A list of businesses is required.' }) };
+        }
+        if (!keyword) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'A search keyword for the business type is required.' }) };
+        }
 
-                <!-- Step 2: Column Mapping -->
-                <div id="step-mapping" class="step">
-                     <div>
-                        <h2 class="text-2xl font-semibold text-slate-800">Step 2: Map Columns</h2>
-                        <p class="text-slate-500 mt-1">Match your spreadsheet columns to the required data fields.</p>
-                    </div>
-                    <div id="mapping-error" class="my-4 p-3 text-red-700 bg-red-100 rounded-lg hidden"></div>
-                    <div id="mapping-table-container" class="mt-6 rounded-lg border"></div>
-                    <div class="flex justify-end mt-6 space-x-4">
-                        <button id="prospect-button-init" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Find Me More Friends</button>
-                        <button id="verify-button" class="bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-800 transition-colors">Start Verification</button>
-                    </div>
-                </div>
-
-                <!-- Step 2.5: Prospecting Input -->
-                <div id="step-prospect-input" class="step">
-                    <div>
-                        <h2 class="text-2xl font-semibold text-slate-800">Find New Prospects</h2>
-                        <p class="text-slate-500 mt-1">What type of businesses are you looking for?</p>
-                    </div>
-                    <div class="mt-6">
-                        <label for="prospect-keyword" class="block text-sm font-medium text-slate-700">Business Type (e.g., "plumbers", "dentists")</label>
-                        <input type="text" id="prospect-keyword" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter a business type or keyword">
-                    </div>
-                    <div id="prospect-input-error" class="mt-2 text-sm text-red-600"></div>
-                    <div class="flex justify-end mt-6">
-                        <button id="start-prospecting-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Search for Prospects</button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Processing (Verification or Prospecting) -->
-                <div id="step-processing" class="step">
-                    <div class="text-center">
-                        <h2 id="processing-title" class="text-2xl font-semibold text-slate-800">Processing...</h2>
-                        <p id="processing-subtitle" class="text-slate-500 mt-1">Please wait while we process your request.</p>
-                    </div>
-                     <div class="mt-8 flex flex-col items-center gap-4">
-                        <div class="w-full bg-slate-200 rounded-full h-2.5">
-                            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <p id="progress-text" class="text-slate-600"></p>
-                    </div>
-                </div>
-
-                <!-- Step 4: Results -->
-                <div id="step-results" class="step">
-                    <div>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h2 id="results-title" class="text-2xl font-semibold text-slate-800">Results</h2>
-                                <p id="results-subtitle" class="text-slate-500 mt-1">Review the data and make changes as needed.</p>
-                            </div>
-                             <div class="flex gap-2">
-                                <button id="restart-button" class="border border-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors">Start Over</button>
-                                <button id="export-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Export to Excel</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="results-table-container" class="mt-6 rounded-lg border"></div>
-                </div>
-            </main>
-             <footer class="text-center mt-8">
-                <p class="text-sm text-slate-500">Secure & Reliable Verification Tool</p>
-            </footer>
-        </div>
-    </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const App = {
-        state: {
-            fileHeaders: [],
-            fileData: [],
-            mappedData: [],
-            resultsData: [],
-            secureProxyUrl: "/.netlify/functions",
-        },
-        elements: {},
-
-        init() {
-            this.cacheElements();
-            this.bindEvents();
-        },
-
-        cacheElements() {
-            const ids = ['dropzone', 'file-input', 'upload-error', 'mapping-error', 'mapping-table-container', 'verify-button', 'prospect-button-init', 'start-prospecting-button', 'prospect-keyword', 'prospect-input-error', 'progress-bar', 'progress-text', 'processing-title', 'processing-subtitle', 'results-table-container', 'results-title', 'results-subtitle', 'export-button', 'restart-button'];
-            ids.forEach(id => this.elements[id.replace(/-/g, '')] = document.getElementById(id));
-            this.elements.steps = {
-                upload: document.getElementById('step-upload'),
-                parsing: document.getElementById('step-parsing'),
-                mapping: document.getElementById('step-mapping'),
-                prospectinput: document.getElementById('step-prospect-input'),
-                processing: document.getElementById('step-processing'),
-                results: document.getElementById('step-results'),
-            };
-        },
-
-        navigateTo(step) {
-            Object.values(this.elements.steps).forEach(s => s.classList.remove('active'));
-            this.elements.steps[step]?.classList.add('active');
-        },
-
-        bindEvents() {
-            const { dropzone, fileinput, verifybutton, prospectbuttoninit, startprospectingbutton, exportbutton, restartbutton } = this.elements;
-            dropzone.addEventListener('click', () => fileinput.click());
-            dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('border-blue-500'); });
-            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500'));
-            dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('border-blue-500'); this.handleFile(e.dataTransfer.files[0]); });
-            fileinput.addEventListener('change', e => this.handleFile(e.target.files[0]));
-            verifybutton.addEventListener('click', () => this.handleProcessClick('verify'));
-            prospectbuttoninit.addEventListener('click', () => this.handleProcessClick('prospect-init'));
-            startprospectingbutton.addEventListener('click', () => this.handleProspectSearch());
-            exportbutton.addEventListener('click', () => this.exportResults());
-            restartbutton.addEventListener('click', () => this.restart());
-        },
-
-        handleFile(file) {
-            if (!file) return;
-            this.showError('upload', '');
-            this.navigateTo('parsing'); 
-            setTimeout(() => {
-                const ext = file.name.split('.').pop().toLowerCase();
-                if (ext === 'csv') this.parseCsv(file);
-                else if (['xlsx', 'xls'].includes(ext)) this.parseExcel(file);
-                else {
-                    this.showError('upload', 'Unsupported file type. Please use CSV, XLSX, or XLS.');
-                    this.navigateTo('upload');
-                }
-            }, 100);
-        },
-
-        parseCsv(file) {
-            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } });
-        },
+        const existingNamesSet = new Set(businesses.map(b => (b['Business Name'] || '').toLowerCase()));
         
-        parseExcel(file) {
-            const reader = new FileReader();
-            reader.onload = async e => {
-                try {
-                    const workbook = new ExcelJS.Workbook();
-                    await workbook.xlsx.load(e.target.result);
-                    const worksheet = workbook.worksheets[0];
-                    let headerRowNumber = -1, headers = [];
-                    worksheet.eachRow((row, rowNum) => { if (row.values.filter(Boolean).length > 0 && headerRowNumber < 0) { headers = row.values.filter(Boolean).map(h => h.toString().trim()); headerRowNumber = rowNum; } });
-                    if (headers.length === 0) throw new Error("Could not find a valid header row.");
-                    const data = [];
-                    worksheet.eachRow((row, rowNumber) => {
-                        if (rowNumber > headerRowNumber) {
-                            const rowData = {}; let hasData = false;
-                            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-                                const header = headers[colNumber - 1];
-                                if (header) { let val = cell.value?.toString() || ''; rowData[header] = val; if(val) hasData = true; }
-                            });
-                            if (hasData) data.push(rowData);
-                        }
-                    });
-                    this.onFileParsed(headers, data);
-                } catch (err) { this.showError('upload', `Excel Error: ${err.message}`); this.navigateTo('upload'); }
-            };
-            reader.readAsArrayBuffer(file);
-        },
+        // --- Extract unique zip codes and prepare for searching ---
+        const zipRegex = /\b\d{5}\b/;
+        const uniqueZips = [...new Set(businesses.map(b => (b['Address'] || '').match(zipRegex)?.[0]).filter(Boolean))];
+        const allProspects = new Map();
 
-        onFileParsed(headers, data) {
-            this.state.fileHeaders = headers; this.state.fileData = data; this.renderMappingTable(); this.navigateTo('mapping');
-        },
-
-        renderMappingTable() {
-            const TARGET_FIELDS = ['Business Name', 'Address', 'Phone', 'Email'];
-            const autoDetect = h => { const l = (h || '').toLowerCase(); if (l.includes('name')) return 'Business Name'; if (l.includes('address')) return 'Address'; return ''; };
-            let tableHtml = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-3 text-left font-semibold">Your Column</th><th class="p-3 text-left font-semibold">Map to Field</th></tr></thead><tbody>`;
-            const detected = {};
-            this.state.fileHeaders.forEach(h => { const d = autoDetect(h); if (d && !Object.values(detected).includes(d)) detected[h] = d; });
-            this.state.fileHeaders.forEach(h => {
-                const sel = detected[h] || ''; let opts = '<option value="ignore">Ignore</option>';
-                TARGET_FIELDS.forEach(f => opts += `<option value="${f}" ${sel === f ? 'selected' : ''}>${f}</option>`);
-                tableHtml += `<tr class="border-t"><td class="p-3 font-medium">${h}</td><td class="p-3"><select data-header="${h}" class="mapping-select w-full p-2 border rounded-md bg-white">${opts}</select></td></tr>`;
-            });
-            this.elements.mappingtablecontainer.innerHTML = tableHtml + '</tbody></table>';
-        },
-
-        handleProcessClick(type) {
-            this.showError('mapping', ''); const mappings = {}; const fields = new Set();
-            document.querySelectorAll('.mapping-select').forEach(s => {
-                if (s.value !== 'ignore') {
-                    if (fields.has(s.value)) return this.showError('mapping', `Field '${s.value}' mapped multiple times.`);
-                    mappings[s.dataset.header] = s.value; fields.add(s.value);
-                }
-            });
-            if (this.elements.mappingerror.textContent) return;
-            this.state.mappedData = this.state.fileData.map(row => {
-                const newRow = {};
-                fields.forEach(field => { const header = Object.keys(mappings).find(h => mappings[h] === field); newRow[field] = row[header] || ''; });
-                return newRow;
-            });
-            if (type === 'verify') this.runVerification();
-            else if (type === 'prospect-init') this.navigateTo('prospectinput');
-        },
-
-        handleProspectSearch() {
-            const keyword = this.elements.prospectkeyword.value.trim();
-            this.elements.prospectinputerror.textContent = '';
-            if (!keyword) { this.elements.prospectinputerror.textContent = 'Please enter a business type to search for.'; return; }
-            this.runProspecting(keyword);
-        },
-
-        async callSecureFunction(endpoint, payload) {
-            const response = await fetch(`${this.state.secureProxyUrl}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'A server error occurred.'); }
-            return response.json();
-        },
-
-        async runVerification() {
-            this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
-            this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
-            for (let i = 0; i < total; i++) {
-                const item = this.state.mappedData[i];
-                try { const result = await this.callSecureFunction('verify-place', { business: item }); this.state.resultsData.push(result); } catch (error) { this.state.resultsData.push({ ...item, Status: 'API Error', 'Current Occupant': error.message, 'Verification Link': '#' }); }
-                const progress = ((i + 1) / total) * 100; this.elements.progressbar.style.width = `${progress}%`; this.elements.progresstext.textContent = `Verifying: ${item['Business Name']} (${i + 1} of ${total})`;
+        // Helper function to convert a zip code into map coordinates using the Geocoding API.
+        const getCoordsForZip = async (zip) => {
+            const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${zip}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(geocodeUrl);
+            const data = await response.json();
+            if (data.status === 'OK' && data.results[0]) {
+                return data.results[0].geometry.location;
             }
-            this.renderVerificationResults(); this.navigateTo('results');
-        },
-
-        async runProspecting(keyword) {
-            this.elements.processingtitle.textContent = "Finding New Friends..."; this.elements.processingsubtitle.textContent = `Searching for '${keyword}' in your provided zip codes.`;
-            this.elements.progresstext.textContent = "Sending request to our secure prospecting service...";
-            this.navigateTo('processing');
-            try {
-                const result = await this.callSecureFunction('find-prospects', { businesses: this.state.mappedData, keyword: keyword });
-                this.state.resultsData = result.prospects;
-                this.renderProspectingResults(); this.navigateTo('results');
-            } catch (error) { this.showError('prospectinput', `Prospecting failed: ${error.message}`); this.navigateTo('prospectinput'); }
-        },
+            return null;
+        };
         
-        renderVerificationResults() {
-            this.elements.resultstitle.textContent = "Verification Results"; this.elements.resultssubtitle.textContent = "The 'Status' column is editable. Click to make changes.";
-            const headers = ['Business Name', 'Address', 'Status', 'Current Occupant', 'Verification Link'];
-            const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
-            const rowsHtml = this.state.resultsData.map((res, index) => {
-                const status = res['Status'] || 'Not Found';
-                const colors = { 'Verified': 'bg-green-100 text-green-800', 'Not Found': 'bg-red-100 text-red-800', 'API Error': 'bg-yellow-100 text-yellow-800' };
-                const cells = `<td class="p-3 font-medium">${res['Business Name'] || ''}</td> <td class="p-3">${res['Address'] || ''}</td> <td class="p-3 status-cell" contenteditable="true" data-row-index="${index}"><span class="px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-slate-100'}">${status}</span></td> <td class="p-3">${res['Current Occupant'] || 'N/A'}</td> <td class="p-3"><a href="${res['Verification Link']}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
-                return `<tr class="border-t">${cells}</tr>`;
-            }).join('');
-            this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-        },
+        // --- Perform a targeted "Nearby Search" for each zip code using the user's keyword ---
+        for (const zip of uniqueZips) {
+            const location = await getCoordsForZip(zip);
+            if (!location) continue; // Skip if the zip code can't be located.
 
-        renderProspectingResults() {
-            this.elements.resultstitle.textContent = "New Prospects Found"; this.elements.resultssubtitle.textContent = "Here are new businesses we found based on your list.";
-            const headers = ['Business Name', 'Address', 'Phone Number', 'Quick Search'];
-            const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
-            const rowsHtml = this.state.resultsData.map(res => {
-                const searchQuery = `https://www.google.com/search?q=${encodeURIComponent(res['Business Name'] + ' ' + res['Address'])}`;
-                const cells = `<td class="p-3 font-medium">${res['Business Name'] || ''}</td> <td class="p-3">${res['Address'] || ''}</td> <td class="p-3">${res['Phone Number'] || 'N/A'}</td> <td class="p-3"><a href="${searchQuery}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
-                return `<tr class="border-t">${cells}</tr>`;
-            }).join('');
-            this.elements.resultstablecontainer.innerHTML = `<table class="w-full text-sm"><thead class="bg-slate-50"><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
-        },
+            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=5000&keyword=${encodeURIComponent(keyword)}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(nearbyUrl);
+            const data = await response.json();
+
+            if (data.status === 'OK') {
+                for (const place of data.results) {
+                    const name = place.name;
+                    // Check if the business is new and not one from the original list.
+                    if (name && !existingNamesSet.has(name.toLowerCase())) {
+                        // Use a Map to automatically handle and remove duplicate prospects.
+                        allProspects.set(name.toLowerCase(), {
+                            'Business Name': name,
+                            'Address': place.vicinity || 'N/A',
+                            'Phone Number': place.formatted_phone_number || 'N/A',
+                        });
+                    }
+                }
+            } else {
+                console.warn(`Google Places Nearby Search failed for zip ${zip} with status: ${data.status}`);
+            }
+        }
         
-        async exportResults() {
-            if (document.querySelector('.status-cell')) { document.querySelectorAll('.status-cell').forEach(cell => { const index = parseInt(cell.dataset.rowIndex, 10); if (this.state.resultsData[index]) this.state.resultsData[index]['Status'] = cell.textContent; }); }
-            if (!this.state.resultsData.length) return;
-            const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Results');
-            worksheet.columns = Object.keys(this.state.resultsData[0]).map(h => ({ header: h, key: h, width: h.toLowerCase().includes('address') ? 40 : 25 }));
-            this.state.resultsData.forEach(row => worksheet.addRow(row));
-            const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), 'verification_results.xlsx');
-        },
-
-        restart() {
-            this.state = { fileHeaders: [], fileData: [], mappedData: [], resultsData: [], secureProxyUrl: "/.netlify/functions" };
-            this.elements.fileinput.value = ''; this.navigateTo('upload');
-        },
-        
-        showError(step, message) { const el = this.elements[`${step}Error`]; if (el) { el.textContent = message; el.classList.toggle('hidden', !message); } }
-    };
-
-    App.init();
-});
-</script>
-</body>
-</html>
+        // Return the final, clean list of new business prospects.
+        return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prospects: Array.from(allProspects.values()) }),
+        };
+    } catch (error) {
+        console.error('Prospecting Function Error:', error);
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+};
 
