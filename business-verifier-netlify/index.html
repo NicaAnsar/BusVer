@@ -157,15 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
         handleFile(file) {
             if (!file) return;
             this.showError('upload', '');
-            this.navigateTo('parsing'); // Show loading bar
+            this.navigateTo('parsing'); 
             
-            // Use a short timeout to allow the UI to update before parsing begins
             setTimeout(() => {
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (ext === 'csv') this.parseCsv(file);
                 else if (['xlsx', 'xls'].includes(ext)) this.parseExcel(file);
                 else {
-                    this.showError('upload', 'Unsupported file type.');
+                    this.showError('upload', 'Unsupported file type. Please use CSV, XLSX, or XLS.');
                     this.navigateTo('upload');
                 }
             }, 100);
@@ -190,17 +189,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     const workbook = new ExcelJS.Workbook();
                     await workbook.xlsx.load(e.target.result);
                     const worksheet = workbook.worksheets[0];
-                    const headers = (worksheet.getRow(1).values || []).filter(Boolean).map(h => h.toString());
+                    
+                    let headerRowNumber = -1;
+                    let headers = [];
+                    worksheet.eachRow((row, rowNum) => {
+                        const nonEmptyCells = row.values.filter(Boolean);
+                        if (nonEmptyCells.length > 0 && headerRowNumber < 0) {
+                            headers = nonEmptyCells.map(h => h.toString().trim());
+                            headerRowNumber = rowNum;
+                        }
+                    });
+
+                    if (headers.length === 0) {
+                        throw new Error("Could not find a valid header row in the spreadsheet.");
+                    }
+
                     const data = [];
                     worksheet.eachRow((row, rowNumber) => {
-                        if (rowNumber > 1) {
+                        if (rowNumber > headerRowNumber) {
                             const rowData = {};
+                            let hasData = false;
                             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-                                if (headers[colNumber - 1]) {
-                                    rowData[headers[colNumber - 1]] = cell.value?.toString() || '';
+                                const header = headers[colNumber - 1];
+                                if (header) {
+                                    let cellValue = '';
+                                    if (cell.value) {
+                                        if (typeof cell.value === 'object' && cell.value.richText) {
+                                            cellValue = cell.value.richText.map(rt => rt.text).join('');
+                                        } else if (typeof cell.value === 'object' && cell.value.result) {
+                                            cellValue = cell.value.result.toString();
+                                        } else {
+                                            cellValue = cell.value.toString();
+                                        }
+                                    }
+                                    rowData[header] = cellValue;
+                                    if (cellValue) hasData = true;
                                 }
                             });
-                            data.push(rowData);
+                            if (hasData) {
+                               data.push(rowData);
+                            }
                         }
                     });
                     this.onFileParsed(headers, data);
@@ -346,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         
         async exportResults() {
-            // Update status from editable cells before exporting verification results
             if (document.querySelector('.status-cell')) {
                  document.querySelectorAll('.status-cell').forEach(cell => {
                     const index = parseInt(cell.dataset.rowIndex, 10);
