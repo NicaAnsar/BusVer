@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Verification & Prospecting Tool - v18.0</title>
+    <title>Business Verification & Prospecting Tool - v19.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -91,7 +91,7 @@
                 </div>
             </main>
              <footer class="text-center mt-8">
-                <p class="text-sm text-slate-500">v18.0 - Verification & Prospecting</p>
+                <p class="text-sm text-slate-500">v19.0 - Verification & Prospecting</p>
             </footer>
         </div>
     </div>
@@ -182,16 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
         async runProspecting(data) {
             if (!data.some(row => row['Address'])) return this.showError('mapping', 'Address column must be mapped to find prospects.');
             this.elements.processingtitle.textContent = 'Finding New Friends...';
-            this.elements.processingsubtitle.textContent = 'Analyzing zip codes and searching for new prospects.';
+            this.elements.processingsubtitle.textContent = 'Analyzing your list and searching for new prospects.';
             this.navigateTo('processing');
-            const zipRegex = /\b\d{5}\b/;
-            const uniqueZips = [...new Set(data.map(row => (row['Address'] || '').match(zipRegex)?.[0]).filter(Boolean))];
-            const existingNames = new Set(data.map(row => (row['Business Name'] || '').toLowerCase()));
-            const result = await this.callSecureFunction('/.netlify/functions/find-prospects', { zipCodes: uniqueZips, existingNames: Array.from(existingNames) });
+            const result = await this.callSecureFunction('/.netlify/functions/find-prospects', { businesses: data });
             this.state.resultsData = result?.prospects || [];
             if (!this.elements.mappingerror.textContent) {
                 this.elements.resultstitle.textContent = 'New Prospects Found';
-                this.elements.resultssubtitle.textContent = `We found ${this.state.resultsData.length} new businesses in or near the zip codes from your list.`;
+                this.elements.resultssubtitle.textContent = `We found ${this.state.resultsData.length} new businesses similar to the ones on your list.`;
                 this.renderResultsTable();
                 this.navigateTo('results');
             }
@@ -221,16 +218,26 @@ document.addEventListener('DOMContentLoaded', () => {
         renderResultsTable() {
             const results = this.state.resultsData;
             if (!results.length) { this.elements.resultstablecontainer.innerHTML = `<p class="p-4 text-center text-slate-500">No results to display.</p>`; return; }
+            
+            if (this.state.currentAction === 'prospect') {
+                results.forEach(res => {
+                    const searchQuery = `${res['Business Name'] || ''} ${res['Address'] || ''}`;
+                    res['Search Link'] = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+                });
+            }
+
             const availableHeaders = Object.keys(results[0]);
             const desiredOrder = this.state.currentAction === 'verify'
                 ? ['Business Name', 'Address', 'Phone', 'Email', 'Status', 'Current Occupant', 'Verification Link']
-                : ['Business Name', 'Address', 'Phone Number'];
+                : ['Business Name', 'Address', 'Phone Number', 'Search Link'];
             const headers = desiredOrder.filter(h => availableHeaders.includes(h));
+            
             const headerHtml = headers.map(h => `<th class="p-3 text-left font-semibold text-slate-700">${h}</th>`).join('');
+            
             const rowsHtml = results.map((res, index) => {
                 const cells = headers.map(h => {
                     const val = res[h] || '';
-                    if (h === 'Verification Link') return `<td class="p-3"><a href="${val}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
+                    if (h === 'Verification Link' || h === 'Search Link') return `<td class="p-3"><a href="${val}" target="_blank" class="text-blue-600 hover:underline">Search</a></td>`;
                     if (h === 'Status') {
                         const colors = { 'Verified': 'bg-green-100 text-green-800', 'Not Found': 'bg-red-100 text-red-800', 'Uncertain': 'bg-yellow-100 text-yellow-800', 'API Error': 'bg-orange-100 text-orange-800' };
                         const statusHtml = `<span class="px-2 py-1 rounded-full text-xs font-medium ${colors[val] || 'bg-slate-100'}">${val}</span>`;
@@ -265,3 +272,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
