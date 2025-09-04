@@ -19,10 +19,40 @@
         .mascot-container {
             position: absolute;
             bottom: 0;
-            right: -2rem;
-            width: 150px;
-            height: 250px;
+            right: -2.5rem;
+            width: 200px;
+            height: 300px;
             display: none;
+        }
+        .speech-bubble {
+            position: absolute;
+            background: #e2e8f0;
+            border-radius: .4em;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #1e293b;
+            bottom: 260px;
+            right: 160px;
+            width: 150px;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.5s forwards;
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 1em;
+            width: 0;
+            height: 0;
+            border: 1.25em solid transparent;
+            border-top-color: #e2e8f0;
+            border-bottom: 0;
+            border-right: 0;
+            margin-left: -0.625em;
+            margin-bottom: -1.25em;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
         @media (min-width: 1024px) {
             .mascot-container {
@@ -44,11 +74,25 @@
                 <!-- SVG Mascot Definitions -->
                 <svg width="0" height="0" style="position:absolute">
                   <defs>
-                    <g id="detective-base" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M75,50 a25,25 0 1,1 -50,0 a25,25 0 1,1 50,0"/>
-                      <path d="M20,30 Q50,10 80,30 M25,50 Q0,70 25,90 M75,50 Q100,70 75,90"/>
-                      <path d="M50,75 V150 L30,220 H70 L50,150"/>
-                      <circle cx="40" cy="45" r="2"/><circle cx="60" cy="45" r="2"/>
+                     <g id="detective-mascot">
+                        <path d="M128.5,299 C140,285 140,268 128,252 C120,241 120,223 126,206 L130,194 C132,188 128,182 122,181 C109,179 100,167 100,154 L100,138 C100,131 94,125 87,125 L73,125 C66,125 60,131 60,138 L60,154 C60,167 51,179 38,181 C32,182 28,188 30,194 L34,206 C40,223 40,241 32,252 C20,268 20,285 31.5,299" fill="#fef3c7"/>
+                        <path d="M37,80 C37,51.7 59.7,29 88,29 L112,29 C140.3,29 163,51.7 163,80 L163,91 C163,96.5 158.5,101 153,101 L47,101 C41.5,101 37,96.5 37,91 L37,80 z" fill="#4a3b33"/>
+                        <path d="M138,81 C138,89.8 130.8,97 122,97 L78,97 C69.2,97 62,89.8 62,81 L62,79 C62,70.2 69.2,63 78,63 L122,63 C130.8,63 138,70.2 138,79 L138,81 z" fill="#b91c1c"/>
+                        <path d="M141,60 C144.3,60 147,57.3 147,54 L147,44 C147,40.7 144.3,38 141,38 L131,38 C127.7,38 125,40.7 125,44 L125,54 C125,57.3 127.7,60 131,60 L141,60 z" fill="#facc15" />
+                        <path d="M50,111 L150,111 L150,121 L50,121 z" fill="#d4d4d8"/>
+                        <path d="M91,155 C91,159.4 87.4,163 83,163 L77,163 C72.6,163 69,159.4 69,155 L69,135 C69,130.6 72.6,127 77,127 L83,127 C87.4,127 91,130.6 91,135 L91,155 z" fill="#64748b"/>
+                        <path d="M80,187 L116,163 L105,130 L65,130 z" fill="#881337" opacity="0.6"/>
+                        <path d="M110,180 L130,220 L150,220 L130,160 z" fill="#312e2a" />
+                        <path d="M50,180 L30,220 L10,220 L30,160 z" fill="#312e2a" />
+                        <path d="M100,125 L130,150 L140,250 L110,250 z" fill="#312e2a"/>
+                        <path d="M60,125 L30,150 L20,250 L50,250 z" fill="#312e2a"/>
+                        <path d="M125,180 L105,250 L55,250 L35,180 C35,170 65,160 80,160 C95,160 125,170 125,180 z" fill="#475569" />
+                        <path d="M80,160 C70,165 70,175 80,180 C90,175 90,165 80,160 z" fill="#fcd34d"/>
+                        <path d="M100,299 C100,299 110,285 100,270 C90,255 80,260 80,260" stroke="#a16207" stroke-width="2" fill="none"/>
+                        <path d="M60,299 C60,299 50,285 60,270 C70,255 80,260 80,260" stroke="#a16207" stroke-width="2" fill="none"/>
+                        <circle cx="65" cy="100" r="3" fill="#e11d48"/>
+                        <circle cx="95" cy="100" r="3" fill="#e11d48"/>
+                        <path d="M75,108 C78,112 82,112 85,108" stroke="#ef4444" stroke-width="1.5" fill="none"/>
                     </g>
                   </defs>
                 </svg>
@@ -72,7 +116,8 @@
                             <div id="upload-error" class="mt-4 text-center lg:text-left text-red-600"></div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L10,120" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                             <div class="speech-bubble">My investigations work best with clean spreadsheets!</div>
+                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
                         </div>
                     </div>
                 </div>
@@ -101,7 +146,7 @@
                             </div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L20,110 M50,100 L80,110" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
                         </div>
                     </div>
                 </div>
@@ -123,8 +168,8 @@
                                 <button id="start-prospecting-button" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Search for Prospects</button>
                             </div>
                         </div>
-                        <div class="mascot-container">
-                            <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L20,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                         <div class="mascot-container">
+                             <svg viewBox="0 0 160 300"><use href="#detective-mascot"/></svg>
                         </div>
                     </div>
                 </div>
@@ -143,7 +188,11 @@
                             </div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M50,100 L30,90" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="85" r="8" stroke="#475569" stroke-width="2"/><line x1="14" y1="79" x2="26" y2="73" stroke="#475569" stroke-width="1.5"/></svg>
+                            <svg viewBox="0 0 160 300">
+                                <use href="#detective-mascot"/>
+                                <circle cx="40" cy="180" r="15" fill="none" stroke="#475569" stroke-width="2"/>
+                                <line x1="30" y1="195" x2="20" y2="205" stroke="#475569" stroke-width="2"/>
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -167,7 +216,11 @@
                             <div id="results-table-container" class="mt-6 rounded-lg border"></div>
                         </div>
                         <div class="mascot-container">
-                             <svg viewBox="0 0 100 250"><use href="#detective-base"/><path d="M40,55 q5,5 10,0 q5,-5 10,0" fill="none" stroke="#475569" stroke-width="1.5"/><path d="M50,100 L60,120 M50,100 L40,120" fill="none" stroke="#475569" stroke-width="2"/></svg>
+                            <svg viewBox="0 0 160 300">
+                                <use href="#detective-mascot"/>
+                                <!-- Happy pose from before, but slight adjustments to eyes -->
+                                 <path d="M60,100 Q80,110 100,100" fill="none" stroke="#e11d48" stroke-width="2"/>
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -182,8 +235,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const App = {
         state: {
-            fileHeaders: [], // Store original headers
-            fileData: [], // Store full original data
+            fileData: [],
             aiMapping: {},
             mappedData: [],
             resultsData: [],
@@ -232,8 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else { this.showError('upload', 'Unsupported file type.'); this.navigateTo('upload'); }
             }, 100);
         },
-
-        // We need the full data later, so we parse it all here
+        
         parseCsv(file) { Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => this.onFileParsed(res.meta.fields, res.data), error: err => { this.showError('upload', `CSV Error: ${err.message}`); this.navigateTo('upload'); } }); },
         
         parseExcel(file) {
@@ -259,16 +310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         async onFileParsed(headers, data) {
-            this.state.fileHeaders = headers; // Store original headers
-            this.state.fileData = data; // Store full original data
-            const sampleData = data.slice(0, 5); // Take a sample for the AI
+            this.state.fileData = data;
+            const sampleData = data.slice(0, 5);
 
             this.elements.parsingtitle.textContent = "AI Analyzing Columns...";
             this.elements.parsingsubtitle.textContent = "Our detective is figuring out your spreadsheet structure.";
             try {
                 const { mapping } = await this.callSecureFunction('intelligent-mapper', { headers, sampleData });
                 this.state.aiMapping = mapping;
-                this.mapDataWithAI(); // Create the mapped dataset
+                this.mapDataWithAI();
                 this.navigateTo('actionchoice');
             } catch (error) {
                 this.showError('upload', `AI Mapping Failed: ${error.message}. Please check file format.`);
@@ -279,11 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mapDataWithAI() {
             const { aiMapping, fileData } = this.state;
             const mappedFields = Object.values(aiMapping);
-            if(mappedFields.length === 0){
-                // Handle case where AI mapping is empty
-                this.showError('actionchoice', 'The AI could not identify standard business fields. Please check your spreadsheet.');
-                return;
-            }
+            if(mappedFields.length === 0){ this.showError('actionchoice', 'The AI could not identify standard business fields. Please check your spreadsheet.'); return; }
             this.state.mappedData = fileData.map(row => {
                 const newRow = {};
                 for(const field of ['Business Name', 'Address', 'Phone', 'Email']){
@@ -309,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async runVerification() {
             if (this.state.mappedData.length === 0) this.mapDataWithAI();
-            if(this.state.mappedData.length === 0) return; // Stop if mapping failed
+            if(this.state.mappedData.length === 0) return;
 
             this.elements.processingtitle.textContent = "Verifying Businesses..."; this.elements.processingsubtitle.textContent = "Please wait while we check your records with the Google Places API.";
             this.navigateTo('processing'); this.state.resultsData = []; const total = this.state.mappedData.length;
