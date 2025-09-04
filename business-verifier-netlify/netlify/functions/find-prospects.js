@@ -2,63 +2,26 @@
 
 exports.handler = async (event) => {
     // Securely access the API keys stored as environment variables in your Netlify site settings.
-    const { GOOGLE_PLACES_API_KEY, GEMINI_API_KEY } = process.env;
+    const { GOOGLE_PLACES_API_KEY } = process.env;
 
     // Check if the necessary API keys are configured.
-    if (!GOOGLE_PLACES_API_KEY || !GEMINI_API_KEY) {
-        return { statusCode: 500, body: JSON.stringify({ error: 'API keys are not configured correctly on Netlify.' }) };
+    if (!GOOGLE_PLACES_API_KEY) {
+        return { statusCode: 500, body: JSON.stringify({ error: 'Google Places API key is not configured correctly on Netlify.' }) };
     }
 
     try {
-        // Parse the data sent from the website (the user's current business list).
-        const { businesses } = JSON.parse(event.body);
+        // Parse the data sent from the website (the user's current business list and the prospect keyword).
+        const { businesses, keyword } = JSON.parse(event.body);
         if (!businesses || businesses.length === 0) {
             return { statusCode: 400, body: JSON.stringify({ error: 'A list of businesses is required to find prospects.' }) };
         }
-
-        const existingNames = businesses.map(b => b['Business Name']);
-        const existingNamesSet = new Set(existingNames.map(name => name.toLowerCase()));
-        let search_keywords = [];
-
-        // --- Primary Strategy: Use the Gemini API to analyze business names and generate relevant search keywords ---
-        try {
-            const llmPrompt = `Analyze the following list of business names. Based on the most common types of businesses, generate a JSON object containing a single key "search_keywords" with a value of an array of 5 highly relevant and specific search terms for the Google Places API to find similar businesses.
-
-Business Names:
-${existingNames.join('\n')}
-
-Example Response: { "search_keywords": ["auto repair shop", "mechanic", "car maintenance", "oil change service", "brake repair"] }`;
-
-            const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: llmPrompt }] }] }),
-            });
-            
-            if (geminiResponse.ok) {
-                const geminiData = await geminiResponse.json();
-                const searchKeywordsText = geminiData.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-                const parsedKeywords = JSON.parse(searchKeywordsText);
-                if (parsedKeywords.search_keywords && parsedKeywords.search_keywords.length > 0) {
-                    search_keywords = parsedKeywords.search_keywords;
-                    console.log("Successfully generated targeted keywords via Gemini API:", search_keywords);
-                }
-            } else {
-                 const errorBody = await geminiResponse.text();
-                 console.error("Gemini API Error, will use fallback:", errorBody);
-            }
-        } catch (llmError) {
-            console.error("Could not process Gemini API response, using fallback keywords.", llmError);
-        }
-        
-        // --- Fallback Strategy: If the LLM fails or returns no keywords, use a broad, generic list ---
-        if (search_keywords.length === 0) {
-            console.log("Using fallback generic keywords for prospecting.");
-            search_keywords = ["business", "store", "professional services", "office", "shop"];
+        if (!keyword) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'A keyword is required to find prospects.' }) };
         }
 
+        const existingNamesSet = new Set(businesses.map(b => b['Business Name'].toLowerCase()));
 
-        // --- Extract unique zip codes and prepare for searching ---
+        // --- Step 1: Extract unique zip codes and prepare for searching ---
         const zipRegex = /\b\d{5}\b/;
         const uniqueZips = [...new Set(businesses.map(b => (b['Address'] || '').match(zipRegex)?.[0]).filter(Boolean))];
         const allProspects = new Map();
@@ -74,28 +37,26 @@ Example Response: { "search_keywords": ["auto repair shop", "mechanic", "car mai
             return null;
         };
         
-        // --- Perform a targeted "Nearby Search" for each zip code and keyword ---
+        // --- Step 2: Perform a targeted "Nearby Search" for each zip code and keyword ---
         for (const zip of uniqueZips) {
             const location = await getCoordsForZip(zip);
             if (!location) continue; // Skip if the zip code can't be located.
 
-            for (const keyword of search_keywords) {
-                const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=5000&keyword=${encodeURIComponent(keyword)}&key=${GOOGLE_PLACES_API_KEY}`;
-                const response = await fetch(nearbyUrl);
-                const data = await response.json();
+            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.lat},${location.lng}&radius=5000&keyword=${encodeURIComponent(keyword)}&key=${GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(nearbyUrl);
+            const data = await response.json();
 
-                if (data.status === 'OK') {
-                    for (const place of data.results) {
-                        const name = place.name;
-                        // Check if the business is new and not one from the original list.
-                        if (name && !existingNamesSet.has(name.toLowerCase())) {
-                            // Use a Map to automatically handle and remove duplicate prospects.
-                            allProspects.set(name.toLowerCase(), {
-                                'Business Name': name,
-                                'Address': place.vicinity || 'N/A',
-                                'Phone Number': place.formatted_phone_number || 'N/A',
-                            });
-                        }
+            if (data.status === 'OK') {
+                for (const place of data.results) {
+                    const name = place.name;
+                    // Check if the business is new and not one from the original list.
+                    if (name && !existingNamesSet.has(name.toLowerCase())) {
+                        // Use a Map to automatically handle and remove duplicate prospects.
+                        allProspects.set(name.toLowerCase(), {
+                            'Business Name': name,
+                            'Address': place.vicinity || 'N/A',
+                            'Phone Number': place.formatted_phone_number || 'N/A',
+                        });
                     }
                 }
             }
